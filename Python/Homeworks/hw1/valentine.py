@@ -1,7 +1,11 @@
-name = "Екатерина"
-name1 = "красивая"
-name2 = "умная"
-name3 = "умная"
+name = input("enter name ")
+#"Екатерина"
+name1 = input("enter compliment ")
+#"красивая"
+name2 = input("enter another compliment ")
+#"умная"
+name3 = input("enter one last compliment ")
+#"умная"
 valentinka = """
 Я люблю тебя за то, что ты самая %s, самая %s, самая %s! Поэтому я посылаю тебе самый огромный воздушный поцелуй! (Подробности при встрече).
 """
