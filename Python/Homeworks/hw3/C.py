@@ -1,8 +1,4 @@
 for row in range(9):
-    for n in range(10 - row + 1):
-        print(' ', end = '')
-    for n in range(row):
-        print(n + 1, end = '')
-    for n in range(row + 1, 0, -1):
-        print(n, end ='')
-    print()
+    print(' ' * (10 - row + 1), end = '')
+    print(*(range(1, row + 1)), end = '', sep = '')
+    print(*range(row + 1, 0, -1), sep = '')
