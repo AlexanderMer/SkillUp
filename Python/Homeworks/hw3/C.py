@@ -1,4 +1,4 @@
-for row in range(9):
-    print(' ' * (10 - row + 1), end = '')
-    print(*(range(1, row + 1)), end = '', sep = '')
-    print(*range(row + 1, 0, -1), sep = '')
+for row in range(1, 10):
+    print(' ' * (10 - row), end = '')
+    print(*(range(1, row)), end = '', sep = '')
+    print(*range(row, 0, -1), sep = '')
