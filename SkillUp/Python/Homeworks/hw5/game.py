@@ -3,8 +3,6 @@ player = {
 	'weapons' : [],
 	'health' : 100.0
 }
-game = False
-current_location = 'dark_room'
 # Stracture of the level is as follows:
 # level -> location -> rooms[]
 #					-> items[] -> (name, id, description, actions)
@@ -13,31 +11,27 @@ current_location = 'dark_room'
 #
 #
 level = {
-	'dark_room' : {
-		'description' : 'a creepy and dark room',
-		'rooms' : ['hallway'],
+	'location1' : {
+		'description' : '',
+		'rooms' : ['location3', 'location2'],
 		'items' : [('a bucket','a very old leaky bucket')]
 		},
-	'hallway' : {
-		'description' : 'an ordinary hallway with blinking lights',
-		'rooms' : ['light_room', 'dark_room'],
+	'location2' : {
+		'description' : '',
+		'rooms' : ['location3', 'location1'],
 		'items' : [('a bucket','a very old leaky bucket')]
 		},
-	'light_room' : {
-		'description' : 'a brightly light room, it\'s so bright it hurts your eyes',
-		'rooms' : ['hallway'],
+	'location3' : {
+		'description' : '',
+		'rooms' : ['location1', 'location2'],
 		'items' : [('a bucket','a very old leaky bucket')]
 		}
 }
 
 
-
+current_location = ''
 
 def goto(location):
-	global current_location
-	if location not in level[current_location]['rooms']:
-		print('you can\'t go there from this location')
-		return
 	current_location = location
 	print('you are in %s. %s' % (location, level[location]['description']))
 	if len(level[location]['items']) > 0:
@@ -50,28 +44,19 @@ def goto(location):
 #def showActions():
 	#for a in level[current_location]['items']:
 		
+
 def take(item, location):
 	print('You took %s.' % (item[0]))
 	player['items'].append(item)
 	level[location]['items'].remove(item)
 
+
+
 def eat(food):
 	player['health'] += food
 
 def start():
-	global game
-	game = True
-	goto('dark_room')
-	while game:
-		print('what would you like to do?')
-		display_options()
-		game = False
+	goto('location1')
 
-
-def display_options():
-	if len(level[current_location]['items']) > 0:
-		print('Take?')
-	if len(level[current_location]['rooms']) > 0:
-		print('Go?')
 start()
 	
