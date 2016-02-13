@@ -1,8 +1,4 @@
-import datetime
-from datetime import _days_before_year
-
-
-class cash_register:
+class Cash_Register:
     def __init__(self):
         self.storage = {}
         self.check = []
@@ -14,27 +10,37 @@ class cash_register:
 
     def add(self, name, price, quantity):
         """Main buying operation. Adds product to check, updates cash_check"""
+        name = name.lower()
         if name in self.storage:
             self.storage[name][quantity] += quantity
         else:
             self.storage[name] = {'price': price, 'quantity': quantity}
+            print('Added {} to storage'.format(name))
 
-    def buy(self, name, quantity, price):
+    def buy(self, name, quantity):
         """Main buying operation. Adds product to check, updates cash_check"""
-        if self.storage[name][quantity] - quantity > 0:
-            self.check.append((name, quantity, price, price * quantity))
+        if name in self.storage:
+            if self.storage[name]['quantity'] - quantity > 0:
+                self.check.append((name, quantity, self.storage[name]['price'], self.storage[name]['price'] * quantity))
+                self.check_total += self.storage[name]['price'] * quantity
+                print('Added {} of {}'.format(quantity, name))
+            else:
+                print('Out of stock')
         else:
-            print('Out of stock')
+            print('Sorry, we don\'t sell this')
 
     def cancel(self, *indices):
         """Removes from check products at positions specified in arguments.
        If called without arguments removes all products"""
-        if len(indices) > 0:
+        if indices is not None:
             indices = sorted(indices, reverse=True)
             for i in indices:
+                self.check_total -= self.check[i][3]
                 del self.check[i]
         else:
             self.check = []
+            self.check_total = 0
+        self.print_check()
 
     def change_product_price(self, product, new_price):
         """Changes price of specified product"""
@@ -45,6 +51,8 @@ class cash_register:
         print("=======Check=======")
         for i in self.check:
             print(*i)
+        print("====================")
+        print("              {}".format(self.check_total))
 
     def print_storage(self):
         """Prints contents of storage"""
@@ -59,4 +67,24 @@ class cash_register:
         """To finish buying operation you should call this function.
        Removes products listed in check from storage, updates cash_register_total,
        refreshes the check and cash_check variables"""
+        self.earned_total += self.check_total
+        self.check_total = 0
+        for i in self.check:
+            self.storage[i[0]]['quantity'] -= i[1]
+        self.check = []
 
+    def print_storage(self):
+        res = ''
+        res += '=========Storage==========\n'
+        for i in self.storage:
+            res += '{}, {} units, {} $ \n'.format(str(i), str(self.storage[i]['quantity']), str(self.storage[i]['price']))
+        return res
+
+    def list_items(self):
+        for i in self.storage:
+            print(i)
+
+
+
+c = Cash_Register()
+print(c)
