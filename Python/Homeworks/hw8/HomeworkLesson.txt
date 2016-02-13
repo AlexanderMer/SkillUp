@@ -1,0 +1,4 @@
+A. Finish Person, Khinkali class, we started on lecture.
+B. Implement rat game. Detailed description provided in task_description.rtf file. 
+
+I've tested this game at home on python3.5 and everything worked, so I assume that reason why we were not able to run it properly on lecture was in PC's at classroom.
