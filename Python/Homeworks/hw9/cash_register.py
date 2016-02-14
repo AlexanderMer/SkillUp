@@ -21,6 +21,13 @@ class Cash_Register:
         """Main buying operation. Adds product to check, updates cash_check"""
         if name in self.storage:
             if self.storage[name]['quantity'] - quantity > 0:
+                for i in range(len(self.check)):
+                    if self.check[i][0] == name:
+                        old_q = self.check[i][1]
+                        new_q = old_q + quantity
+                        self.check[i] = (name, new_q, self.storage[name]['price'], self.storage[name]['price'] * new_q)
+                        self.check_total += self.storage[name]['price'] * quantity
+                        return
                 self.check.append((name, quantity, self.storage[name]['price'], self.storage[name]['price'] * quantity))
                 self.check_total += self.storage[name]['price'] * quantity
                 print('Added {} of {}'.format(quantity, name))
@@ -72,6 +79,7 @@ class Cash_Register:
         for i in self.check:
             self.storage[i[0]]['quantity'] -= i[1]
         self.check = []
+        print('Thank you, have a nice day :)')
 
     def print_storage(self):
         res = ''
