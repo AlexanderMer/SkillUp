@@ -27,6 +27,7 @@ class Cash_Register:
                         new_q = old_q + quantity
                         self.check[i] = (name, new_q, self.storage[name]['price'], self.storage[name]['price'] * new_q)
                         self.check_total += self.storage[name]['price'] * quantity
+                        print('Added {} of {}'.format(quantity, name))
                         return
                 self.check.append((name, quantity, self.storage[name]['price'], self.storage[name]['price'] * quantity))
                 self.check_total += self.storage[name]['price'] * quantity
