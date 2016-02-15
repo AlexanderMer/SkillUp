@@ -4,15 +4,13 @@ class Cash_Register:
         self.check = []
         self.earned_total = 0
         self.check_total = 0
-        self.add('eggs', 0.30, 1000)
-        self.add('bread', 0.75, 180)
-        self.add('milk', 3.5, 90)
 
     def add(self, name, price, quantity):
         """Main buying operation. Adds product to check, updates cash_check"""
         name = name.lower()
         if name in self.storage:
-            self.storage[name][quantity] += quantity
+            self.storage[name]['quantity'] += quantity
+            self.storage[name]['price'] = price
         else:
             self.storage[name] = {'price': price, 'quantity': quantity}
             print('Added {} to storage'.format(name))
@@ -21,6 +19,7 @@ class Cash_Register:
         """Main buying operation. Adds product to check, updates cash_check"""
         if name in self.storage:
             if self.storage[name]['quantity'] - quantity > 0:
+                #if item exists in check, just increase quantity
                 for i in range(len(self.check)):
                     if self.check[i][0] == name:
                         old_q = self.check[i][1]
@@ -60,12 +59,13 @@ class Cash_Register:
         for i in self.check:
             print(*i)
         print("====================")
-        print("              {}".format(self.check_total))
+        print("       Total   {}".format(self.check_total))
 
     def print_storage(self):
         """Prints contents of storage"""
+        print('========Storage=======')
         for i in self.storage:
-            print(*i)
+            print('{} {} {}'.format(i, self.storage[i]['price'], self.storage[i]['quantity']))
 
     def print_total_cash(self):
         """Prints how many cash was made during session on this cash register"""
@@ -82,18 +82,12 @@ class Cash_Register:
         self.check = []
         print('Thank you, have a nice day :)')
 
-    def print_storage(self):
-        res = ''
-        res += '=========Storage==========\n'
-        for i in self.storage:
-            res += '{}, {} units, {} $ \n'.format(str(i), str(self.storage[i]['quantity']), str(self.storage[i]['price']))
-        return res
-
     def list_items(self):
         for i in self.storage:
             print(i)
 
 
-
 c = Cash_Register()
-print(c)
+c.add('eggs', 0.30, 1000)
+c.add('bread', 0.75, 180)
+c.add('milk', 3.5, 90)
