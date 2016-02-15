@@ -60,21 +60,31 @@ class Cash_Register:
             print(*i)
         print("====================")
         print("       Total   {}".format(self.check_total))
+        print()
 
     def print_storage(self):
         """Prints contents of storage"""
         print('========Storage=======')
         for i in self.storage:
             print('{} {} {}'.format(i, self.storage[i]['price'], self.storage[i]['quantity']))
+        print()
 
     def print_total_cash(self):
         """Prints how many cash was made during session on this cash register"""
         print('today {} was made'.format(self.earned_total))
 
-    def purchase(self):
+    def purchase(self, client=None):
         """To finish buying operation you should call this function.
        Removes products listed in check from storage, updates cash_register_total,
        refreshes the check and cash_check variables"""
+        if client is not None:
+            if client.points > 10:
+                self.check_total /= 10
+                client.points += 1
+                print('Every 10th purchase gives you a 10% discount')
+            else:
+                client.points += 1
+                print('Client () earned 1 point, he now has {} points'.format(client.id, client.points))
         self.earned_total += self.check_total
         self.check_total = 0
         for i in self.check:
@@ -86,8 +96,26 @@ class Cash_Register:
         for i in self.storage:
             print(i)
 
+class Client:
+    def __init__(self, id):
+        self.id = id
+        self.points = 0
+
+
 
 c = Cash_Register()
 c.add('eggs', 0.30, 1000)
 c.add('bread', 0.75, 180)
 c.add('milk', 3.5, 90)
+
+class Helper:
+    def test(self, client):
+        c.print_storage()
+        c.buy('bread', 2)
+        c.buy('eggs', 12)
+        c.buy('milk', 1)
+        c.buy('ham', 1)
+        c.print_check()
+        c.purchase(client)
+        c.print_storage()
+
