@@ -1,11 +1,14 @@
+import storage
+
 class Cash_Register:
     def __init__(self):
-        self.storage = {}
+        self.storage = storage.storage
         self.check = []
         self.earned_total = 0
         self.check_total = 0
+        self.locked = {}
 
-    def add(self, name, price, quantity):
+    def add_product(self, name, price, quantity):
         """Main buying operation. Adds product to check, updates cash_check"""
         name = name.lower()
         if name in self.storage:
@@ -18,7 +21,7 @@ class Cash_Register:
     def buy(self, name, quantity):
         """Main buying operation. Adds product to check, updates cash_check"""
         if name in self.storage:
-            if self.storage[name]['quantity'] - quantity > 0:
+            if self.storage[name]['quantity'] - quantity >= 0:
                 #if item exists in check, just increase quantity
                 for i in range(len(self.check)):
                     if self.check[i][0] == name:
@@ -26,25 +29,38 @@ class Cash_Register:
                         new_q = old_q + quantity
                         self.check[i] = (name, new_q, self.storage[name]['price'], self.storage[name]['price'] * new_q)
                         self.check_total += self.storage[name]['price'] * quantity
+                        self.locked[name] += quantity
+                        self.storage[name]['quantity'] -= quantity
+                        self.print_check()
                         print('Added {} of {}'.format(quantity, name))
                         return
                 self.check.append((name, quantity, self.storage[name]['price'], self.storage[name]['price'] * quantity))
                 self.check_total += self.storage[name]['price'] * quantity
+                self.locked[name] = quantity
+                self.storage[name]['quantity'] -= quantity
                 print('Added {} of {}'.format(quantity, name))
+                self.print_check()
             else:
                 print('Out of stock')
         else:
-            print('Sorry, we don\'t sell this')
+            print('Sorry, we don\'t sell this. Here is what we offer')
+            self.print_storage()
+            
 
     def cancel(self, *indices):
         """Removes from check products at positions specified in arguments.
        If called without arguments removes all products"""
-        if indices is not None:
+        if len(indices) > 0:
             indices = sorted(indices, reverse=True)
             for i in indices:
                 self.check_total -= self.check[i][3]
+                self.add_product(self.check[i][0], self.check[i][2], self.check[i][1])
+                self.locked[self.check[i][0]] -= self.check[i][1]
                 del self.check[i]
         else:
+            for i in self.check:
+                self.add_product(i[0], i[2], i[1])
+                self.locked[i[0]] -= i[1]
             self.check = []
             self.check_total = 0
         self.print_check()
@@ -60,35 +76,23 @@ class Cash_Register:
             print(*i)
         print("====================")
         print("       Total   {}".format(self.check_total))
-        print()
 
     def print_storage(self):
         """Prints contents of storage"""
         print('========Storage=======')
         for i in self.storage:
             print('{} {} {}'.format(i, self.storage[i]['price'], self.storage[i]['quantity']))
-        print()
 
     def print_total_cash(self):
         """Prints how many cash was made during session on this cash register"""
         print('today {} was made'.format(self.earned_total))
 
-    def purchase(self, client=None):
+    def purchase(self):
         """To finish buying operation you should call this function.
        Removes products listed in check from storage, updates cash_register_total,
        refreshes the check and cash_check variables"""
-        if client is not None:
-            if client.points > 10:
-                self.check_total /= 10
-                client.points += 1
-                print('Every 10th purchase gives you a 10% discount')
-            else:
-                client.points += 1
-                print('Client () earned 1 point, he now has {} points'.format(client.id, client.points))
         self.earned_total += self.check_total
         self.check_total = 0
-        for i in self.check:
-            self.storage[i[0]]['quantity'] -= i[1]
         self.check = []
         print('Thank you, have a nice day :)')
 
@@ -96,26 +100,7 @@ class Cash_Register:
         for i in self.storage:
             print(i)
 
-class Client:
-    def __init__(self, id):
-        self.id = id
-        self.points = 0
 
-
-
-c = Cash_Register()
-c.add('eggs', 0.30, 1000)
-c.add('bread', 0.75, 180)
-c.add('milk', 3.5, 90)
-
-class Helper:
-    def test(self, client):
-        c.print_storage()
-        c.buy('bread', 2)
-        c.buy('eggs', 12)
-        c.buy('milk', 1)
-        c.buy('ham', 1)
-        c.print_check()
-        c.purchase(client)
-        c.print_storage()
+c1 = Cash_Register()
+c2 = Cash_Register()
 
