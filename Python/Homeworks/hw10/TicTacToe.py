@@ -1,5 +1,9 @@
 class Game:
     def __init__(self):
+        self.attack_paths = {'rs': [1, 1, 1],
+                            'cs': [1, 1, 1],
+                            'd1': 1,
+                            'd2': 1}
         self.board = [[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]]
@@ -15,24 +19,22 @@ class Game:
         self.turn = 'X'
         self.moves = 0
         self.selection = 0
+        self.mode = 'yes'
 
     def get_input(self):
-        '''turn must be either O or X'''
-        temp = 0
+        """turn must be either O or X"""
         try:
             temp = int(input('Where to place {} '.format(self.turn)))
-        except:
+        except ValueError:
             print('please enter a number')
             self.get_input()
         else:
-            #if 1 <= temp <= 9:
-            if temp >= 1 and temp <= 9:
+            if 1 <= temp <= 9:
                 print(temp)
                 self.selection = temp
             else:
                 print('Please enter number between 1 and 9')
                 self.get_input()
-            
 
     def print_board(self):
         print('------------')
@@ -61,35 +63,178 @@ class Game:
             return self.board[0][2]
 
     def start(self):
+        self.mode = input('would you like to play with AI (forever alone)? Yes / No  ').lower()
         self.game_loop()
 
     def game_loop(self):
         while True:
             self.print_board()
             self.place_char()
+            self.moves += 1
             if self.check_wins() == 'X':
-                print('X wins!')
+                print('X wins!'.upper())
                 break
             elif self.check_wins() == 'O':
-                print('O wins!')
+                print('O wins!'.upper())
                 break
             elif self.moves > 9:
-                print('stalemate')
+                print('stalemate'.upper())
                 break
             self.switch_turn()
         self.print_board()
        
     def place_char(self):
-        self.get_input()
-        player = self.selection
-        print('player ' + str(player))
-        tile = self.board[self.map[player][0]][self.map[player][1]]
-        if tile != 'X' and tile != 'O':
-            self.board[self.map[player][0]][self.map[player][1]] = self.turn
-            self.moves += 1
+        # AI
+        if self.mode == 'yes' and self.turn == 'O':
+            # inspect board, since during the game there can be only 1 or 2 character in a row / column/diagonal
+            # depending whether it's 1 or 2 the AI goes offence or defense
+
+            # First check if AI can win with next move, if not, check if AI needs to defend
+            # check rows
+            enemy_count = 0
+            empty_count = 0
+            friendly_count = 0
+            empty_tile = None
+            
+            for r in range(3):
+                for c in range(3):
+                    if self.board[r][c] == 'X':
+                        enemy_count += 1
+                    elif self.board[r][c] != 'O':
+                        empty_tile = (r, c)
+                    elif self.board[r][c] == 'O':
+                        friendly_count += 1
+                if enemy_count > 0:
+                    self.attack_paths['rs'][r] = 0
+                # attack
+                if friendly_count == 2 and empty_tile is not None:
+                    self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                    return
+                # defend
+                if enemy_count == 2 and empty_tile is not None:
+                    self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                    return
+                enemy_count = 0
+                empty_tile = None
+                friendly_count = 0
+            # enemy_count = 0
+            # empty_tile = None
+
+            # check columns
+            for c in range(3):
+                for r in range(3):
+                    if self.board[r][c] == 'X':
+                        enemy_count += 1
+                    elif self.board[r][c] != 'O':
+                        empty_tile = (r, c)
+                    elif self.board[r][c] == 'O':
+                        friendly_count += 1
+                if enemy_count > 0:
+                    self.attack_paths['cs'][c] = 0
+                # attack
+                if friendly_count == 2 and empty_tile is not None:
+                    self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                    return
+                # defend
+                if enemy_count == 2 and empty_tile is not None:
+                    self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                    return
+                enemy_count = 0
+                empty_tile = None
+                friendly_count = 0
+            
+            # enemy_count = 0
+            # empty_tile = None
+
+            # check diagonal 1
+            for t in range(3):
+                if self.board[t][t] == 'X':
+                    enemy_count += 1
+                elif self.board[t][t] != 'O':
+                    empty_tile = (t, t)
+                elif self.board[t][t] == 'O':
+                    friendly_count += 1
+            if enemy_count > 0:
+                    self.attack_paths['d1'] = 0
+            #attack
+            if friendly_count == 2 and empty_tile is not None:
+                self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                return
+            #defend
+            if enemy_count == 2 and empty_tile is not None:
+                self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                return
+            enemy_count = 0
+            empty_tile = None
+            friendly_count = 0
+
+            # check diagonal 2
+            for t in range(3):
+                if self.board[t][2 - t] == 'X':
+                    enemy_count += 1
+                elif self.board[t][2 - t] != 'O':
+                    empty_tile = (t, 2 - t)
+                elif self.board[t][2 - t] == 'O':
+                    friendly_count += 1
+            if enemy_count > 0:
+                self.attack_paths['d2'] = 0
+            #attack
+            if friendly_count == 2 and empty_tile is not None:
+                self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                return
+            #defend
+            if enemy_count == 2 and empty_tile is not None:
+                self.board[empty_tile[0]][empty_tile[1]] = self.turn
+                return
+            enemy_count = 0
+            empty_tile = None
+            friendly_count = 0
+
+            # if AI can't win with one move AND neither can player, AI attacks
+            # Get list of avaible attack paths and place 'O' in correct place
+          # print(':))))))))') 
+            rows = self.attack_paths['rs']
+            for r in range(3):
+                if rows[r]:
+                  # print('Got here, ' + str(r))
+                    for t in range(3):
+                        if self.board[r][t] != 'O':
+                          # print('Niice!')
+                            self.board[r][t] = self.turn
+                            return
+            # check columns
+            cols = self.attack_paths['cs']
+            for c in range(3):
+                if cols[c]:
+                  # print('Got here, ' + str(r))
+                    for t in range(3):
+                        if self.board[t][c] != 'O':
+                          # print('Niice!')
+                            self.board[t][c] = self.turn
+                            return
+            # check diagonal 1
+            if self.attack_paths['d1']:
+            	for t in range(3):
+            		if self.board[t][t] != 'O':
+            			self.board[t][t] = self.turn
+            			return
+            if self.attack_paths['d2']:
+            	for t in range(3):
+            		if self.board[t][2 - t] != 'O':
+            			self.board[t][2 - t] = self.turn
+            			return
+
+
+
+        # Human player
         else:
-            print('You can\'t place it there')
-            self.place_char()
+            self.get_input()
+            tile = self.board[self.map[self.selection][0]][self.map[self.selection][1]]
+            if tile != 'X' and tile != 'O':
+                self.board[self.map[self.selection][0]][self.map[self.selection][1]] = self.turn
+            else:
+                print('You can\'t place it there')
+                self.place_char()
 
 
 
