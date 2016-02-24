@@ -1,3 +1,6 @@
+import pickle
+
+
 class Game:
     def __init__(self):
         self.attack_paths = {'rs': [1, 1, 1],
@@ -20,6 +23,8 @@ class Game:
         self.moves = 0
         self.selection = 0
         self.mode = 'yes'
+        self.leader_board = [('rob', 999),('rob', 999),('rob', 999),('rob', 999),('rob', 999),('rob', 999),
+                             ('rob', 999),('rob', 999),('rob', 999),('rob', 999)]
 
     def get_input(self):
         """turn must be either O or X"""
@@ -63,8 +68,14 @@ class Game:
             return self.board[0][2]
 
     def start(self):
-        self.mode = input('would you like to play with AI (forever alone)? Yes / No  ').lower()
-        self.game_loop()
+        self.load_leader_board()
+        self.print_leader_board()
+        if input('new game or load? (n \ l)').startswith('l'):
+            self.load_game()
+            self.game_loop()
+        else:
+            self.mode = input('would you like to play with AI (forever alone)? Yes / No  ').lower()
+            self.game_loop()
 
     def game_loop(self):
         while True:
@@ -81,7 +92,10 @@ class Game:
                 print('stalemate'.upper())
                 break
             self.switch_turn()
+            self.save_game()
         self.print_board()
+        self.update_leader_board()
+        self.print_leader_board()
        
     def place_char(self):
         # AI
@@ -214,17 +228,15 @@ class Game:
                             return
             # check diagonal 1
             if self.attack_paths['d1']:
-            	for t in range(3):
-            		if self.board[t][t] != 'O':
-            			self.board[t][t] = self.turn
-            			return
+                for t in range(3):
+                    if self.board[t][t] != 'O':
+                        self.board[t][t] = self.turn
+                        return
             if self.attack_paths['d2']:
-            	for t in range(3):
-            		if self.board[t][2 - t] != 'O':
-            			self.board[t][2 - t] = self.turn
-            			return
-
-
+                for t in range(3):
+                    if self.board[t][2 - t] != 'O':
+                        self.board[t][2 - t] = self.turn
+                        return
 
         # Human player
         else:
@@ -236,7 +248,33 @@ class Game:
                 print('You can\'t place it there')
                 self.place_char()
 
+    def save_game(self):
+        pickle.dump((self.board, self.turn, self.moves, self.mode, self.attack_paths), open('TicTacToe_save.tctctoe', 'wb'))
 
+    def load_game(self):
+        try:
+            self.board, self.turn, self.moves, self.mode, self.attack_paths = pickle.load(open('TicTacToe_save.tctctoe', 'rb'))
+        except FileNotFoundError:
+            print('save game not found, starting new game')
+        except:
+            print('something went wrong, starting new game')
 
+    def update_leader_board(self):
+        name = input('what\'s your name ? ')
+        for i in range(10):
+            if self.leader_board[i][1] > self.moves:
+                self.leader_board[i] = (name, self.moves)
+                break
+        pickle.dump(self.leader_board, open('leader_board.tctctoe', 'wb'))
+
+    def load_leader_board(self):
+        try:
+            self.leader_board = pickle.load(open('leader_board.tctctoe', 'rb'))
+        except Exception as e:
+            print(e.args)
+
+    def print_leader_board(self):
+        for l in self.leader_board:
+            print(*l)
 g = Game()
 g.start()
