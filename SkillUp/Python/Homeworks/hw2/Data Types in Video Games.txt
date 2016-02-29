@@ -1,8 +1,0 @@
-Booleans => use to indicate various states like if the game is paused or if a weapon is broken and needs repairs.
-Numbers => Anything that benefits from numberic representation and / or requires calculation e.g. health, coordinates.
-Strings => Everything related to text.
-Bytes => usefull to convert data into binary for serialisation and saving on disc or writing into network.
-Lists => Can be used for dynamic inventory system. 
-Tuples => various purposes 
-Sets => chuncks of unordered data, can be used to calculate game statistics
-Dictionaries => use for item description
