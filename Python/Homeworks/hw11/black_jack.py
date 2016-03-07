@@ -68,7 +68,7 @@ def game():
     print('{} cards: '.format(players[0][2])) # name
     print(*players[int(turn)][0]) # cards
     print('Dealer cards: ')
-    print('## ' + players[1][0][1]) # cards
+    print('## ' + str(players[1][0][1])) # cards
     update_score(0)
     # update_score(1)
     print()
