@@ -9,7 +9,10 @@ BALL_Y = 10
 PLAYER_STEP = 20
 PING_SPEED = 0
 PONG_SPEED = 0
+PING_SCORE = 0
+PONG_SCORE = 0
 root = Tk()
+root.resizable = 0
 
 def set_up_board():
 	global GAME_BOARD
@@ -39,8 +42,10 @@ def set_up_board():
 	GAME_BOARD.create_oval(half_width - circle_rad, half_height - circle_rad,
 						half_width + circle_rad, half_height + circle_rad, fill="white", outline="white")
 	#  score texts
-	PING_TEXT = GAME_BOARD.create_text(int(BOARD_WIDTH / 15), int(BOARD_HEIGHT / 18),text="0", font="Arial 20", fill="white")
-	PONG_TEXT = GAME_BOARD.create_text(BOARD_WIDTH - int(BOARD_WIDTH / 15), int(BOARD_HEIGHT / 18),text="0", font="Arial 20", fill="white")
+	PING_TEXT = GAME_BOARD.create_text(int(BOARD_WIDTH / 15), int(BOARD_HEIGHT / 18),
+									   text=PING_SCORE, font="Arial 20", fill="white")
+	PONG_TEXT = GAME_BOARD.create_text(BOARD_WIDTH - int(BOARD_WIDTH / 15), int(BOARD_HEIGHT / 18),
+									   text=PONG_SCORE, font="Arial 20", fill="white")
 	#  ball
 	BALL_SIZE = int(BOARD_HEIGHT / 30)
 	x, y = randint(0, BOARD_WIDTH), randint(0, BOARD_HEIGHT)
@@ -49,11 +54,14 @@ def set_up_board():
 	GAME_BOARD.focus_set()
 	GAME_BOARD.bind('<KeyPress>', pressed)
 	GAME_BOARD.bind('<KeyRelease>', released)
-	
-	
+
 def move_stuff():
 	global BALL_X
 	global BALL_Y
+	global PONG_TEXT
+	global PONG_SCORE
+	global PING_TEXT
+	global PING_SCORE
 	#  Move ball
 	GAME_BOARD.move(BALL, BALL_X, BALL_Y)
 	ball_coords = GAME_BOARD.coords(BALL)
@@ -61,18 +69,18 @@ def move_stuff():
 	pong_coords = GAME_BOARD.coords(PONG)
 	#  check in which half of board the ball
 	if ball_coords[0] < BOARD_WIDTH / 2:
-		if ping_coords[1] < ball_coords[1] < ping_coords[3]:
-			print("range!")
+		#  PING
+		if not (ping_coords[1] < ball_coords[1] < ping_coords[3]) and ball_coords[0] < REC_WIDTH + 10:
+			PING_SCORE += 1
+			print("Ping {}".format(PING_SCORE))
+			GAME_BOARD.coords(BALL, 100, 100, 100 + BALL_SIZE, 100 + BALL_SIZE)
+
 	else:
+		#  PONG
 		if pong_coords[1] < ball_coords[3] < pong_coords[3]:
 			print("!!!!!!!!!!")
 
-	if  not (0 < ball_coords[1] < BOARD_HEIGHT - 1):
-				BALL_Y = -BALL_Y
-				print("switched direction")
-	if not (15 < ball_coords[0] < BOARD_WIDTH - 30):
-		BALL_X = -BALL_X
-		print("switched direction")
+	bounce()
 	
 
 	#  Move player
@@ -81,6 +89,17 @@ def move_stuff():
 	if 0 <= pong_coords[3] - REC_HEIGHT / 2 + PONG_SPEED <= BOARD_HEIGHT:
 		GAME_BOARD.move(PONG, 0, PONG_SPEED)
 	root.after(50, move_stuff)
+
+def bounce():
+	global BALL_X
+	global BALL_Y
+	ball_coords = GAME_BOARD.coords(BALL)
+	if  not (0 < ball_coords[1] < BOARD_HEIGHT - 1):
+				BALL_Y = -BALL_Y
+				print("switched direction")
+	if not (15 < ball_coords[0] < BOARD_WIDTH - 30):
+		BALL_X = -BALL_X
+		print("switched direction")
 
 def pressed(event):
 	global PING_SPEED , PONG_SPEED
@@ -99,7 +118,6 @@ def released(event):
 		PING_SPEED = 0
 	elif event.keysym == "Down" or event.keysym == "Up":
 		PONG_SPEED = 0
-
 
 def start_game():
 	move_stuff()
