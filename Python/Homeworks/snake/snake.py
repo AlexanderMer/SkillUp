@@ -126,7 +126,8 @@ class Game:
                                         0, i * size + size)
 
     def new_game(self):
-        game_running = True
+        #  BUG! DDO NOT USE!
+        """game_running = True
         self.FIELD.delete(self.snake.head)
         self.FIELD.delete(self.snake.tail)
         for r in self.snake.segments:
@@ -135,7 +136,7 @@ class Game:
         self.FIELD.delete(self.game_over_text)
         self.snake = Snake(self.FIELD, 100, 100, 20)
         self.snake_speed = 100
-        self.game_loop()
+        self.game_loop()"""
 
 
 Game()
