@@ -8,7 +8,7 @@ PORT = 9871# the port number to run our server on
 __version__ = "0.0.1"
 
 class ChatServer(threading.Thread):
-    def __init__(self, port, host='192.168.0.104'):
+    def __init__(self, port, host=socket.gethostname()):
         threading.Thread.__init__(self)
         self.port = port
         self.host = host
