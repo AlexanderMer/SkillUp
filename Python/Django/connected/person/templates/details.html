@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ profile.name }}
+{% endblock %}
+
+{% block content %}
+  <h2>{{ profile.name }}</h2>
+  <i>{{ profile.birth_date }}</i><br>
+  {% if profile.avatar %}
+	<img src="/{{ profile.avatar }}" alt="" width="15%" height="25%"><br>
+  {% else %}
+	<p>No image provided</p><br>
+  {% endif %}
+  <div>{{ profile.about }}</div>
+{% endblock %}
