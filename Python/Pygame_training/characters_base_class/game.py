@@ -20,11 +20,11 @@ class Game:
          # Setting up characters
         self.player = Mage(self.DISPlAY_SURF, self.level, "Sasha")
         self.player2 = GuestAvatar(self.DISPlAY_SURF, self.level, "Dima")
-        self.player2.world_coords = 100, 100
+        self.player2.world_coords = (random.randint(0, self.level.LEVEL_WIDTH_PX),
+                                     random.randint(0, self.level.LEVEL_HEIGHT_PX))
         self.players_sprites = pygame.sprite.Group()
         self.players_sprites.add(self.player)
         self.players_sprites.add(self.player2)
-
 
         self.__main_loop()  # MUST BE LAST LINE!
 

@@ -16,21 +16,21 @@ class Tile(pygame.sprite.Sprite):
 
 class Sprite_Level:
     """Class responsible for generating, storing, and updating background level"""
-    def __init__(self, surface, tile_size=100, level_width=50, level_height=50):
+    def __init__(self, surface, tile_size=250, level_width=50, level_height=50):
         self.LEVEL = []
         self.surface = surface
-        self.TILE_SIZE = tile_size  # tile size in pixels
         self.LEVEL_WIDTH = level_width  # number of tiles horizontally
         self.LEVEL_HEIGHT = level_height  # number of tiles vertically
+        self.sprite_group = pygame.sprite.Group()
+        self.generate_level_test()
+        self.TILE_SIZE = self.LEVEL[0].rect.width  # tile size in pixels
         self.LEVEL_WIDTH_PX = self.TILE_SIZE * self.LEVEL_WIDTH  # Width in pixels
         self.LEVEL_HEIGHT_PX = self.TILE_SIZE * self.LEVEL_HEIGHT  # Height in pixels
-        self.sprite_group = pygame.sprite.Group()
         self.KEYS_MAP = {}
         self.x_offset, self.y_offset = 0, 0  # Used to move map around
         self.x_offset_step, self.y_offset_step = 45, 45
         self.margin = 100  # when player approaches any end by margin pixels, map will respond and move accordingly
         # self.load_level()
-        self.generate_level_test()
 
 
     def generate_level_test(self):

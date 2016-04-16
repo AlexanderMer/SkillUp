@@ -55,6 +55,14 @@ class Avatar(pygame.sprite.Sprite):
             self.keys_map[key][0](self.keys_map[key][1])
 
     def update(self):
+        self._check_pos()
+        self.world_coords = (self.level.x_offset - self.rect.x, self.level.y_offset - self.rect.y)
+        self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
+        # Calculate text's Y coordinate so it's right above sprite's head
+        self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
+        self.name_tag.render()
+
+    def _check_pos(self):
         self.collided = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
         # Check which tile player occupies now and if player tries to walk on unwalkable tile
         jesus_walking = False
@@ -65,17 +73,9 @@ class Avatar(pygame.sprite.Sprite):
             if not tile.walkable:
                 jesus_walking = True
         if jesus_walking:
-            self.rect.clamp_ip(self.curent_tile)
+            self.rect.clamp_ip(self.curent_tile.rect)
 
-        self._check_pos()
-        self.world_coords = (self.level.x_offset - self.rect.x, self.level.y_offset - self.rect.y)
-        self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
-        # Calculate text's Y coordinate so it's right above sprite's head
-        self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
-        self.name_tag.render()
-
-    def _check_pos(self):
-        """This method is responceble for all actions related to player position"""
+        """This method is responsible for all actions related to player position"""
         if self.rect.x >= self.screen.get_width() - self.level.margin:
             self.level.move_map((-self.movement_speed, 0))
         if self.rect.x <= self.level.margin:
