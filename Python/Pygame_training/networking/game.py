@@ -1,10 +1,12 @@
-import pygame, sys, network_manager, pickle
+import pygame, sys, network_manager, pickle, logging
 from pygame.locals import *
-from characters import Mage, GuestAvatar
+from characters import Mage, GuestAvatar, GuestMage, TYPES_MAP
 from levels import *
 
+logging.basicConfig(level=logging.DEBUG)
+
 class Game:
-    def __init__(self):
+    def __init__(self, hosting=0):
         pygame.init()
         # Initiating global vars
         self.clock = pygame.time.Clock()
@@ -18,7 +20,7 @@ class Game:
         self.players_sprites = 0
         # Setting up window
         self.DISPlAY_SURF = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT),0, 32)
-        self.new_game()
+        self.new_game(hosting)
         self.__main_loop()  # MUST BE LAST LINE!
 
     def do_host_networking(self):
@@ -28,16 +30,16 @@ class Game:
     def do_client_networking(self):
         """Must be called every tick if game is run in CLIENT mode"""
         self.network.send_message(pickle.dumps(self.player.get_meta_data()))
-        print(self.player.get_meta_data()["world_coords"])
 
-    def new_game(self, hosting_game=0):
+    def new_game(self, hosting_game):
         # Setting up level
         self.level = Sprite_Level(self.DISPlAY_SURF)
-        # Setting up characters Sasha Alex
-        my_name = "Sasha" if hosting_game else "Alexander"  # for testing
-        self.player = Mage(self.DISPlAY_SURF, self.level, my_name)
+        # Setting up characters
+        random.seed()
+        names = ['Alex', 'Sasha', 'Lekso', 'Sandro', 'Shurka', 'Alexander', 'Aleksander', 'Aleksandre']
+        my_name = "Host" if hosting_game else random.choice(names)  # for testing
+        self.player = Mage(self.DISPlAY_SURF, self.level, my_name, "Mage")
         self.players_sprites = pygame.sprite.Group()
-        self.players_sprites.add(self.player)
         if hosting_game:
             pygame.display.set_caption("Host")
             self.network = network_manager.Server(self)
@@ -48,10 +50,11 @@ class Game:
             self.world_coords = (256, 256)  # for testing
             self.network = network_manager.Client(self)
             self.network.send_message(pickle.dumps(self.player.get_meta_data()))
+        self.players_sprites.add(self.player)
 
     def add_new_player(self, meta_data, conn):
         name = meta_data['name']
-        self.players[name] = GuestAvatar(self.DISPlAY_SURF, self.level, name)
+        self.players[name] =  TYPES_MAP[meta_data["type"]](self.DISPlAY_SURF, self.level, name, meta_data["type"])
         self.players_sprites.add(self.players[meta_data['name']])
         self.players[name].world_coords = meta_data["world_coords"]
 
@@ -75,9 +78,11 @@ class Game:
             if event.type == KEYDOWN:
                 self.keys_down.append(event.key)
             elif event.type == KEYUP:
-                self.keys_down.remove(event.key)
+                if event.key in self.keys_down:
+                    self.keys_down.remove(event.key)
             elif event.type == QUIT:
-                self.network.close()
+                logging.info("Quitting game")
+                #self.network.close()
                 pygame.quit()
                 sys.exit()
 

@@ -2,11 +2,15 @@ import pygame, random
 from pygame.locals import *
 from name_tag import Name_tag
 
+# CONSTANTS
+MAGE = 1
+
 
 class Avatar(pygame.sprite.Sprite):
-    def __init__(self, screen, level, name):
+    def __init__(self, screen, level, name, type):
         super().__init__()
         self.name = name
+        self.character_type = type
         self.level = level
         self.image = self._load_image()
         self.screen = screen
@@ -26,13 +30,17 @@ class Avatar(pygame.sprite.Sprite):
         self.curent_tile = 0  # Tile occupied by player at the moment
         self.world_coords = (100, 100)
         self.spawn()
+
     def get_meta_data(self):
         return {
             "name": self.name,
-            "world_coords": self.world_coords
+            "world_coords": self.world_coords,
+            "type": self.character_type
         }
 
-    def _load_image(self, path="../game_sprites/avatar.png"):
+    def _load_image(self, path="../game_sprites/"):
+        if self.character_type == MAGE:
+            path += "mage.png"
         try:
             return pygame.image.load(path).convert_alpha()
         except:
@@ -71,7 +79,7 @@ class Avatar(pygame.sprite.Sprite):
     def _check_pos(self):
         self.collided = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
         # Check which tile player occupies now and if player tries to walk on unwalkable tile
-        jesus_walking = False
+        jesus_walking = False  # Indicates if character is trying to walk on water
         for tile in self.collided:
             if (tile.rect.left < self.rect.center[0] < tile.rect.right and
                     tile.rect.bottom > self.rect.center[1] > tile.rect.top):
@@ -89,18 +97,21 @@ class Avatar(pygame.sprite.Sprite):
         if self.rect.y >= self.screen.get_height() - self.level.margin:
             self.level.move_map((0, -self.movement_speed))
         if self.rect.y <= self.level.margin:
-                self.level.move_map((0, self.movement_speed))
+            self.level.move_map((0, self.movement_speed))
 
     def spawn(self):
         """Spwans avatar in a random location on the map"""
         # TODO fix a bug where player can be spawned in unwalkable tile.
         self.rect.center = (random.randint(0, self.level.LEVEL_WIDTH_PX), random.randint(0, self.level.LEVEL_HEIGHT_PX))
+        occupied_tiles = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
+        for tile in occupied_tiles:
+            if not tile.walkable:
+                self.spawn()
 
 
 class GuestAvatar(Avatar):
-    def __init__(self, surface, level, name):
-        # super(pygame.sprite.Sprite, self).__init__()
-        super(GuestAvatar, self).__init__(surface, level, name)
+    def __init__(self, surface, level, name, type):
+        super(GuestAvatar, self).__init__(surface, level, name, type)
 
     def update(self):
         # Calculate text's Y coordinate so it's right above sprite's head
@@ -111,7 +122,16 @@ class GuestAvatar(Avatar):
                                    -self.world_coords[1] + self.level.y_offset
 
 
+class GuestMage(GuestAvatar):
+    def __init__(self, surface, level, name, type):
+        super(GuestAvatar, self).__init__(surface, level, name, type)
+
+
 class Mage(Avatar):
+    def __init__(self, surface, level, name, type):
+        super(Mage, self).__init__(surface, level, name, type)
+        self.character_type = MAGE
+
     def _load_image(self, path="../game_sprites/mage.png"):
         try:
             return pygame.image.load(path).convert_alpha()
@@ -119,3 +139,8 @@ class Mage(Avatar):
             image = pygame.Surface((50, 100))
             image.fill((255, 255, 25))
             return image
+
+
+TYPES_MAP = {
+    MAGE: GuestMage
+}
