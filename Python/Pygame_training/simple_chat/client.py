@@ -14,12 +14,11 @@ class ChatClient:
         thread.start()
 
     def send_message(self):
-        while True:
-            msg = input("Message? ")
+            msg = ("testing", 5)
             if msg == "quit":
-                break
+                return
             else:
-                self.socket.send(msg.encode())
+                self.socket.send(str(msg).encode())
 
     def listen(self):
         while True:
