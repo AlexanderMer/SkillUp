@@ -4,4 +4,9 @@
 {% block content%}
 
 <b>Welcome to connected</b>
+<ul>
+	{% for profile in profiles %}
+		<li><a href="{% url 'person:details' profile.id %}">{{ profile.name }}</a></li>
+	{% endfor %}
+</ul>
 {% endblock %}
