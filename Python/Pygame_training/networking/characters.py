@@ -3,8 +3,8 @@ from pygame.locals import *
 from name_tag import Name_tag
 
 # CONSTANTS
-MAGE = 1
-
+#MAGE = 1
+MAGE = "Mage"
 
 class Avatar(pygame.sprite.Sprite):
     def __init__(self, screen, level, name, type):
@@ -110,8 +110,8 @@ class Avatar(pygame.sprite.Sprite):
 
 
 class GuestAvatar(Avatar):
-    def __init__(self, surface, level, name, type):
-        super(GuestAvatar, self).__init__(surface, level, name, type)
+    def __init__(self, surface, level, name, message_type):
+        super(GuestAvatar, self).__init__(surface, level, name, message_type)
 
     def update(self):
         # Calculate text's Y coordinate so it's right above sprite's head
@@ -142,5 +142,5 @@ class Mage(Avatar):
 
 
 TYPES_MAP = {
-    MAGE: GuestMage
+    MAGE: Mage
 }
