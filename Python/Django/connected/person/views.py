@@ -17,7 +17,9 @@ def details(request, profile_id):
     profile = UserProfile.objects.get(id=profile_id)
     wall_posts = profile.wallpost_set.order_by('-pub_date')  # - before pub_date means in descending order
     form = WallPostForm()
-    if request.POST and request.user.is_authenticated():  # Prevents unauthenticated user from posting
+    if request.POST:
+        if not request.user.is_authenticated():  # Prevents unauthenticated user from posting
+            return redirect('person:login')
         form = WallPostForm(request.POST)
         if form.is_valid():
             wall_post = form.save(commit=False)

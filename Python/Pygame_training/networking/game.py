@@ -70,9 +70,11 @@ class Game:
         name = meta_data['name']
         #self.players[name] = TYPES_MAP[meta_data["type"]](self.DISPlAY_SURF, self.level, name, meta_data["type"])
         if self.hosting:
+            #self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
             self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         else:
-            self.players[name] = ClientAvatar(self.DISPlAY_SURF, self.level, name, meta_data["type"])
+            #self.players[name] = ClientAvatar(self.DISPlAY_SURF, self.level, name, meta_data["type"])
+            self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         self.players_sprites.add(self.players[meta_data['name']])
         self.players[name].world_coords = meta_data["world_coords"]
         logging.info("created new player {} -> {}".format(name, self.players[meta_data['name']]))
@@ -92,7 +94,8 @@ class Game:
                 self.players_sprites.draw(self.DISPlAY_SURF)
             except pygame.error:
                 logging.warning("syrface was locked while Blitting")
-            pygame.display.set_caption("Host level_offset: {} {}".format(self.level.x_offset, self.level.y_offset))
+            #pygame.display.set_caption("Host level_offset: {} {}".format(self.level.x_offset, self.level.y_offset))
+            pygame.display.set_caption("w_coords {} {}".format(*self.player.world_coords))
             pygame.display.update()  # Must be last two lines
             self.clock.tick(60)
 

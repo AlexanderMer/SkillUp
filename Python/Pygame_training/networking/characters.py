@@ -15,7 +15,6 @@ class Avatar(pygame.sprite.Sprite):
         self.image = self._load_image()
         self.screen = screen
         self.rect = self.image.get_rect()
-        print("Crating Avatar wiht rect {}".format(self.rect))
         self.velocity = [0, 0]
         self.movement_speed = 7  # number of pixels traveled per frame
         self.looking_right = 0
@@ -52,10 +51,13 @@ class Avatar(pygame.sprite.Sprite):
 
     def move_avatar(self, delta):
         """Moves the sprite on screen and updates sprite to face the right direction
-        Delta is a tuple"""
-        # move
-        self.rect.x += delta[0]
-        self.rect.y += delta[1]
+        Delta is a tuple
+        The method first assigns player's global position and then calculates where he should appear on the window"""
+        new_world_x = self.world_coords[0] - delta[0]
+        new_world_y = self.world_coords[1] - delta[1]
+        if (-self.level.LEVEL_WIDTH_PX <= new_world_x <= 0 and -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0
+            and self._check_pos(new_world_x, new_world_y)):
+            self.world_coords = [new_world_x, new_world_y]
         # Turn image right or left
         if delta[0] < 0 and self.looking_right:
             self.image = pygame.transform.flip(self.image, 1, 0)
@@ -71,48 +73,39 @@ class Avatar(pygame.sprite.Sprite):
             self.keys_map[key][0](self.keys_map[key][1])
 
     def update(self):
-        self._check_pos()
-        self.world_coords = (self.level.x_offset - self.rect.x, self.level.y_offset - self.rect.y)
+        #self.rect.centerx, self.rect.centery = self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1]
+        self.rect.centerx, self.rect.centery = self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1]
+        self._check_map_borders()
         # Calculate text's Y coordinate so it's right above sprite's head
         self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
         self.name_tag.render()
+        #self._check_pos()
 
-    def _check_pos(self):
-        """This method makes sure player can't do illegal move"""
-        self.collided = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
-        # Check which tile player occupies now and if player tries to walk on unwalkable tile
-        jesus_walking = False  # Indicates if character is trying to walk on water
-        for tile in self.collided:
-            if (tile.rect.left < self.rect.center[0] < tile.rect.right and
-                    tile.rect.bottom > self.rect.center[1] > tile.rect.top):
-                self.curent_tile = tile
-            if not tile.walkable:
-                jesus_walking = True
-        if jesus_walking:
-            self.rect.clamp_ip(self.curent_tile.rect)
-        self._check_map_borders()
+    def _check_pos(self, x, y):
+        """This method returns false if player is colliding with unwalkable tiles"""
+        x, y = int((-x) / self.level.TILE_SIZE), int(-y / self.level.TILE_SIZE)
+        logging.info("{}: x {}, y {}, width {} height {}".format(str(self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable),
+                                                                 x, y, self.level.LEVEL_WIDTH, self.level.LEVEL_HEIGHT))
+        return self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable
 
     def _check_map_borders(self):
         """This method is responsible for all actions related to player position"""
-        self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
-        if self.rect.x >= self.screen.get_width() - self.level.margin:
+        # self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
+        if self.rect.centerx >= self.screen.get_width() - self.level.margin:
             self.level.move_map((-self.movement_speed, 0))
-        if self.rect.x <= self.level.margin:
+        if self.rect.centerx <= self.level.margin:
             self.level.move_map((self.movement_speed, 0))
-        if self.rect.y >= self.screen.get_height() - self.level.margin:
+        if self.rect.centery >= self.screen.get_height() - self.level.margin:
             self.level.move_map((0, -self.movement_speed))
-        if self.rect.y <= self.level.margin:
+        if self.rect.centery <= self.level.margin:
             self.level.move_map((0, self.movement_speed))
 
     def spawn(self):
-        """Spwans avatar in a random location on the map"""
+        """Spwans avatar in a random location on the map
+        Warning, coordinates ust be divisible by player step, otherwise it will cause
+        an array out of bounds exception near edge of the map"""
         # TODO fix a bug where player can be spawned in unwalkable tile.
-        #self.rect.center = (random.randint(0, self.level.LEVEL_WIDTH_PX), random.randint(0, self.level.LEVEL_HEIGHT_PX))
-        self.rect.center = (random.randint(0, 500), random.randint(0, 500))
-        #occupied_tiles = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
-        #for tile in occupied_tiles:
-        #    if not tile.walkable:
-        #        self.spawn()
+        self.world_coords= [self.movement_speed, -self.movement_speed]
 
 
 class GuestAvatar(Avatar):
@@ -123,12 +116,6 @@ class GuestAvatar(Avatar):
     def _check_map_borders(self):
         """Must be empty!"""
         pass
-
-    def update(self):
-        self._check_pos()
-        self.world_coords = (-self.rect.x, -self.rect.y,)
-        self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
-        self.name_tag.render()
 
 
 class GuestMage(GuestAvatar):
@@ -156,15 +143,14 @@ class ClientAvatar(Avatar):
     def press_key(self, key):
         pass
 
-    def update(self):
-        #self.world_coords = (self.level.x_offset - self.rect.x, self.level.y_offset - self.rect.y)
-        # Calculate text's Y coordinate so it's right above sprite's head
-        self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
-        self.name_tag.render()
-        """Should translate world coords into rectX and rectY"""
-        self.rect.x, self.rect.y = -self.world_coords[0] + self.level.x_offset, \
-                                   -self.world_coords[1] + self.level.y_offset
-
+    #def update(self):
+     #   #self.world_coords = (self.level.x_offset - self.rect.centerx, self.level.y_offset - self.rect.centery)
+      #  # Calculate text's Y coordinate so it's right above sprite's head
+       # self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
+        #self.name_tag.render()
+        #"""Should translate world coords into rectX and rectY"""
+        #self.rect.centerx, self.rect.centery = -self.world_coords[0] + self.level.x_offset, \
+          #                         -self.world_coords[1] + self.level.y_offset
 
 
 TYPES_MAP = {
