@@ -72,7 +72,7 @@ class Sprite_Level:
     def draw_level(self):
         #self.sprite_group.draw(self.surface)
         # TODO update only area curently viwed by player
-        # TODO update only part of the screen that changed since lsat frame e.g. player moved
+        # TODO update only part of the screen that changed since last frame e.g. player moved
         # to get [x][y] use formula (x * height + y)
         for tile in range(len(self.LEVEL)):  # Tile is an index in list of tiles
             x = int(tile / self.LEVEL_HEIGHT) * self.TILE_SIZE
