@@ -84,8 +84,8 @@ class Avatar(pygame.sprite.Sprite):
     def _check_pos(self, x, y):
         """This method returns false if player is colliding with unwalkable tiles"""
         x, y = int((-x) / self.level.TILE_SIZE), int(-y / self.level.TILE_SIZE)
-        logging.info("{}: x {}, y {}, width {} height {}".format(str(self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable),
-                                                                 x, y, self.level.LEVEL_WIDTH, self.level.LEVEL_HEIGHT))
+        #logging.info("{}: x {}, y {}, width {} height {}".format(str(self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable),
+        #                                                         x, y, self.level.LEVEL_WIDTH, self.level.LEVEL_HEIGHT))
         return self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable
 
     def _check_map_borders(self):
@@ -105,7 +105,7 @@ class Avatar(pygame.sprite.Sprite):
         Warning, coordinates ust be divisible by player step, otherwise it will cause
         an array out of bounds exception near edge of the map"""
         # TODO fix a bug where player can be spawned in unwalkable tile.
-        self.world_coords= [self.movement_speed, -self.movement_speed]
+        self.world_coords= [-self.movement_speed, -self.movement_speed]
 
 
 class GuestAvatar(Avatar):
