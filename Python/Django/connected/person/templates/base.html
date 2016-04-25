@@ -7,9 +7,15 @@
 	<link rel="stylesheet" href="{% static 'css/base.css' %}">
 </head>
 <body>
+<b><i>Hello, {% if user.is_authenticated %}{{ user.username }} {% else %}World {% endif %}</i></b>
 	<ul>
 		<li><a href="{% url 'person:home' %}">Home</a></li>
-		<li><a href="#">Profile</a></li>
+		{% if user.is_authenticated %}
+        <li><a href="{% url 'person:logout' %}">Logout</a></li>
+        {% else %}
+		<li><a href="{% url 'person:register' %}">Register</a></li>
+		<li><a href="{% url 'person:login' %}">Login</a></li>
+		{% endif %}
 	</ul>
 	{% block content %}
 	{% endblock %}

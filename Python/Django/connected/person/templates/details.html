@@ -6,11 +6,27 @@
 
 {% block content %}
   <h2>{{ profile.name }}</h2>
-  <i>{{ profile.birth_date }}</i><br>
+  <i>{{ profile.birth_date }}</i><a href="{% url 'person:edit' profile.id %}">Edit</a> <br>
   {% if profile.avatar %}
 	<img src="/{{ profile.avatar }}" alt="" width="15%" height="25%"><br>
   {% else %}
 	<p>No image provided</p><br>
   {% endif %}
-  <div>{{ profile.about }}</div>
+  <div>{{ profile.about }}</div><br>
+<form action="{% url 'person:details' profile.id %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Post">
+</form>
+
+{% if wall_posts %}
+    {% for post in wall_posts %}
+    <div>
+        <p><b>{{ post.sender }}</b>, said at  <i>{{ post.pub_date }}</i></p><br>
+        {{ post.body }}
+    </div><br>
+    {% endfor %}
+{% else %}
+    <p>No posts yet!</p>
+{% endif %}
 {% endblock %}

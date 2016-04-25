@@ -12,3 +12,11 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return  self.name
+
+
+class WallPost(models.Model):
+    receiver = models.ForeignKey(UserProfile)
+    sender = models.ForeignKey(UserProfile, related_name="sender")
+
+    pub_date = models.DateTimeField()
+    body = models.TextField()
