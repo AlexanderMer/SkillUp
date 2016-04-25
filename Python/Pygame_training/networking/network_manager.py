@@ -1,17 +1,16 @@
-import socket, threading, pickle, logging
+import socket, threading, pickle, logging, sys
 
 # The client shoud send data about one self and  recieve data about everyone else
 # The server must get everyone's data, process it and send it back
 
 #TODO sync player's movement e.g. when one player's screen scrolls he moves faster
-#TODO sync maps (random map on host and send it to clients)
 #TODO for host: reroute client's info to other players
 #TODO implement connection termination mechanism in the even of disconnecting
 #TODO fix bug where game gets stuck on closing window
 PORT = 9876  # the port number to run our server on
 # Commands constants
 NEW_PLAYER = 1  # Meta data
-GAME_STATE = 2  # Player position Meta_data
+PLAYERS_STATES = 2  # Players position each player's meta_data
 PLAYER_QUIT = 3  # optional args
 KEYS_PRESSED = 4  # tuple (name, keys)
 
@@ -30,15 +29,15 @@ class Server(threading.Thread):
         threading.Thread.__init__(self)
         self.port = port
         self.host = host
-        self.GAME = game
+        self.game = game
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.users = []  # current connections
         self.lock = threading.Lock()
         try:
             self.socket.bind((self.host, self.port))
         except socket.error:
-            print('Bind failed {}'.format(socket.error))
-            return
+            logging.error('Bind failed {}'.format(socket.error))
+            sys.exit(-1)
         print("Server initiated")
         self.socket.listen(10)
         self.start()
@@ -56,11 +55,15 @@ class Server(threading.Thread):
         raw_message = conn.recv(4096)  # first, client should pass player meta data
         meta_data = pickle.loads(raw_message).message
         logging.info("meta data received {}".format(meta_data))
-        self.GAME.add_new_player(meta_data)
-        logging.info("players currently connected: {}".format(self.GAME.players))
+        # Send info about game state to new player
+        conn.send(pickle.dumps(Message(type=NEW_PLAYER, message=self.game.player.get_meta_data())))
+        for player in self.game.players:
+            conn.send(pickle.dumps(Message(type=NEW_PLAYER, message=self.game.players[player].get_meta_data())))
+        self.game.add_new_player(meta_data)
+        logging.info("players currently connected: {}".format(self.game.players))
         # Inform other players about new connection
         for user in self.users:
-            user.sendall(raw_message)
+            user.send(raw_message)
             print("sending new player signal to user: {}".format(user))
         self.users.append(conn)  # Append new player AFTER rerouting meta data to players
         while True:
@@ -71,13 +74,20 @@ class Server(threading.Thread):
                 logging.warning("Received data could not be decoded")
             except socket.error:
                 logging.warning("Error getting data from client")
+            except EOFError:
+                logging.warning("EOF Error when depickling essage")
             else:
                 if msg.message_type == KEYS_PRESSED:
-                    for key in msg.message[1]:
-                        self.GAME.players[msg.message[0]].press_key(key)
-                elif msg.message_type == GAME_STATE:
-                    self.GAME.players[msg.message["name"]].world_coords = msg.message["world_coords"]
-        conn.close() # Close
+                    with self.lock:
+                        for key in msg.message[1]:
+                            self.game.players[msg.message[0]].press_key(key)
+                elif msg.message_type == PLAYERS_STATES:
+                    logging.info("SERVER PLAYER STATES RECEIVED!!!!!")
+                    #self.game.players[msg.message["name"]].world_coords = msg.message["world_coords"]
+                    pass
+                elif msg.message_type == PLAYER_QUIT:
+                    conn.close()
+        #conn.close() # Close
 
     def run(self):
         print('Waiting for connections on port %s' % (self.port))
@@ -90,7 +100,7 @@ class Server(threading.Thread):
     def send_to_all(self, bytes):
         for user in self.users:
             try:
-                user.sendall(bytes)
+                user.send(bytes)
             except socket.error:
                 logging.error("Could not send data to {}".format(user))
             else:
@@ -130,16 +140,27 @@ class Client:
         while True:
             try:
                 msg = pickle.loads(self.socket.recv(4096))
-                print("GOT NEW MESSAGE!  {}".format(msg))
                 # logging.info("Got reply {}".format(msg))
             except socket.error:
                 logging.error("Something happened in client while listening")
             except pickle.PickleError:
                 logging.error("Could not deserialize received Message")
+            except EOFError:
+                logging.error("Could not deserialize received Message")
+            except KeyError:
+                logging.error("Key error on received Message wtf?")
             else:
-                if msg.message_type == GAME_STATE:
-                    pass
+                if msg.message_type == PLAYERS_STATES:
+                    # list of dicks with meta_data
+                    for player in msg.message:
+                        # temp workaround, should avoid IFs in the future
+                        if player["name"] == self.game.player.name:
+                            self.game.player.world_coords = player["world_coords"]
+                        else:
+                            if player['name'] in self.game.players:  # TEMP workaround bug, which didn't add player to client
+                                self.game.players[player["name"]].world_coords = player["world_coords"]
                 elif msg.message_type == NEW_PLAYER:
+                    logging.info("New player Message received")
                     self.game.add_new_player(msg.message)
 
     def add_new_player(self, meta):
@@ -147,6 +168,7 @@ class Client:
         self.game.add_new_player(meta)
 
     def close(self):
+        self.send_message(pickle.dumps(Message(type=PLAYER_QUIT, message=None)))
         if self.listening_thread.is_alive():
             self.listening_thread.join()
         self.socket.close()

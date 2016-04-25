@@ -1,4 +1,4 @@
-import pygame, random
+import pygame, random, logging
 from pygame.locals import *
 from name_tag import Name_tag
 
@@ -15,6 +15,7 @@ class Avatar(pygame.sprite.Sprite):
         self.image = self._load_image()
         self.screen = screen
         self.rect = self.image.get_rect()
+        print("Crating Avatar wiht rect {}".format(self.rect))
         self.velocity = [0, 0]
         self.movement_speed = 7  # number of pixels traveled per frame
         self.looking_right = 0
@@ -30,6 +31,7 @@ class Avatar(pygame.sprite.Sprite):
         self.curent_tile = 0  # Tile occupied by player at the moment
         self.world_coords = (100, 100)
         self.spawn()
+        logging.info("avatar {} spawned".format(self.name))
 
     def get_meta_data(self):
         return {
@@ -71,12 +73,12 @@ class Avatar(pygame.sprite.Sprite):
     def update(self):
         self._check_pos()
         self.world_coords = (self.level.x_offset - self.rect.x, self.level.y_offset - self.rect.y)
-        self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
         # Calculate text's Y coordinate so it's right above sprite's head
         self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
         self.name_tag.render()
 
     def _check_pos(self):
+        """This method makes sure player can't do illegal move"""
         self.collided = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
         # Check which tile player occupies now and if player tries to walk on unwalkable tile
         jesus_walking = False  # Indicates if character is trying to walk on water
@@ -88,8 +90,11 @@ class Avatar(pygame.sprite.Sprite):
                 jesus_walking = True
         if jesus_walking:
             self.rect.clamp_ip(self.curent_tile.rect)
+        self._check_map_borders()
 
+    def _check_map_borders(self):
         """This method is responsible for all actions related to player position"""
+        self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
         if self.rect.x >= self.screen.get_width() - self.level.margin:
             self.level.move_map((-self.movement_speed, 0))
         if self.rect.x <= self.level.margin:
@@ -102,35 +107,38 @@ class Avatar(pygame.sprite.Sprite):
     def spawn(self):
         """Spwans avatar in a random location on the map"""
         # TODO fix a bug where player can be spawned in unwalkable tile.
-        self.rect.center = (random.randint(0, self.level.LEVEL_WIDTH_PX), random.randint(0, self.level.LEVEL_HEIGHT_PX))
-        occupied_tiles = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
-        for tile in occupied_tiles:
-            if not tile.walkable:
-                self.spawn()
+        #self.rect.center = (random.randint(0, self.level.LEVEL_WIDTH_PX), random.randint(0, self.level.LEVEL_HEIGHT_PX))
+        self.rect.center = (random.randint(0, 500), random.randint(0, 500))
+        #occupied_tiles = pygame.sprite.spritecollide(self, self.level.sprite_group, False)
+        #for tile in occupied_tiles:
+        #    if not tile.walkable:
+        #        self.spawn()
 
 
 class GuestAvatar(Avatar):
-    def __init__(self, surface, level, name, message_type):
-        super(GuestAvatar, self).__init__(surface, level, name, message_type)
+    """Must be initialized on HOST machine"""
+    def __init__(self, surface, level, name, character_type):
+        super(GuestAvatar, self).__init__(surface, level, name, character_type)
+
+    def _check_map_borders(self):
+        """Must be empty!"""
+        pass
 
     def update(self):
-        # Calculate text's Y coordinate so it's right above sprite's head
+        self._check_pos()
+        self.world_coords = (-self.rect.x, -self.rect.y,)
         self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
         self.name_tag.render()
-        # assign correct relative to window coordinates
-        self.rect.x, self.rect.y = -self.world_coords[0] + self.level.x_offset, \
-                                   -self.world_coords[1] + self.level.y_offset
 
 
 class GuestMage(GuestAvatar):
-    def __init__(self, surface, level, name, type):
-        super(GuestAvatar, self).__init__(surface, level, name, type)
+    def __init__(self, surface, level, name, character_type):
+        super(GuestMage, self).__init__(surface, level, name, character_type)
 
 
 class Mage(Avatar):
-    def __init__(self, surface, level, name, type):
-        super(Mage, self).__init__(surface, level, name, type)
-        self.character_type = MAGE
+    def __init__(self, surface, level, name, character_type):
+        super(Mage, self).__init__(surface, level, name, character_type)
 
     def _load_image(self, path="../game_sprites/mage.png"):
         try:
@@ -139,6 +147,24 @@ class Mage(Avatar):
             image = pygame.Surface((50, 100))
             image.fill((255, 255, 25))
             return image
+
+
+class ClientAvatar(Avatar):
+    def __init__(self, screen, level, name, character_type):
+        super(ClientAvatar, self).__init__(screen, level, name, character_type)
+
+    def press_key(self, key):
+        pass
+
+    def update(self):
+        #self.world_coords = (self.level.x_offset - self.rect.x, self.level.y_offset - self.rect.y)
+        # Calculate text's Y coordinate so it's right above sprite's head
+        self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
+        self.name_tag.render()
+        """Should translate world coords into rectX and rectY"""
+        self.rect.x, self.rect.y = -self.world_coords[0] + self.level.x_offset, \
+                                   -self.world_coords[1] + self.level.y_offset
+
 
 
 TYPES_MAP = {

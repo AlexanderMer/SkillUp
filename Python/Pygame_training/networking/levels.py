@@ -48,11 +48,11 @@ class Sprite_Level:
                 Tile("../game_sprites/water.png", walkable=False, tile_id=t)
             self.LEVEL.append(tile)
             self.sprite_group.add(tile)
-        with open("level.lvl", "wb") as f:
-            pickle.dump(self.LEVEL, f)
-        with open("level_sprites.lvl", "wb") as f:
-            pickle.dump(self.sprite_group, f)
-        print("File dumbped!!")
+        #with open("level.lvl", "wb") as f:
+        #    pickle.dump(self.LEVEL, f)
+        #with open("level_sprites.lvl", "wb") as f:
+        #    pickle.dump(self.sprite_group, f)
+        #print("File dumbped!!")
 
     def load_level(self, path="level.lvl"):
         with open("level.lvl", "rb") as f:

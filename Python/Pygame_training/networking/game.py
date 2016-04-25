@@ -1,6 +1,6 @@
 import pygame, sys, network_manager, pickle, logging
 from pygame.locals import *
-from characters import Mage, GuestAvatar, GuestMage, TYPES_MAP
+from characters import *
 from levels import *
 from network_manager import *
 
@@ -18,6 +18,7 @@ class Game:
     def __init__(self, hosting=0):
         pygame.init()
         # Initiating global vars
+        self.hosting = hosting
         self.clock = pygame.time.Clock()
         self.keys_down = []
         self.WINDOW_WIDTH = 800
@@ -32,14 +33,12 @@ class Game:
         self.game_state = 0  # Contains all info about game and players
         self.new_game(hosting)  # Must be last line!
 
-
     def do_host_networking(self):
         """Must be called every tick if HOSTING game"""
-        self.network.send_to_all(pickle.dumps(Message(network_manager.GAME_STATE, self.collect_players_states())))
+        self.network.send_to_all(pickle.dumps(Message(PLAYERS_STATES, self.collect_players_states())))
 
     def do_client_networking(self):
         """Must be called every tick if game is run in CLIENT mode"""
-        #self.network.send_message(pickle.dumps(Message(network_manager.GAME_STATE, self.player.get_meta_data())))
         self.network.send_message(pickle.dumps(Message(KEYS_PRESSED, (self.player.name, self.keys_down))))
 
     def new_game(self, hosting_game):
@@ -47,8 +46,7 @@ class Game:
         self.level = Sprite_Level(self.DISPlAY_SURF)
         # Setting up characters
         random.seed()
-        names = ['Alex', 'Sasha', 'Lekso', 'Sandro', 'Shurka', 'Alexander', 'Aleksander', 'Aleksandre']
-        my_name = "Host" if hosting_game else random.choice(names)  # for testing
+        my_name = "Host" if hosting_game else str(random.randint(0, 3000))  # for testing
         self.players_sprites = pygame.sprite.Group()
         if hosting_game:
             self.player = Mage(self.DISPlAY_SURF, self.level, my_name, "Mage")
@@ -58,8 +56,8 @@ class Game:
             self.players_sprites.add(self.player)
             self._host_main_loop()  # MUST BE LAST LINE!
         else:
-            self.player = GuestMage(self.DISPlAY_SURF, self.level, my_name, "Mage")
-            pygame.display.set_caption("Client")
+            self.player = ClientAvatar(self.DISPlAY_SURF, self.level, my_name, "Mage")
+            pygame.display.set_caption("Client {}".format(self.player.name))
             self.do_networking = self.do_client_networking
             self.world_coords = (256, 256)  # for testing
             self.network = network_manager.Client(self)
@@ -70,34 +68,43 @@ class Game:
 
     def add_new_player(self, meta_data):
         name = meta_data['name']
-        self.players[name] =  TYPES_MAP[meta_data["type"]](self.DISPlAY_SURF, self.level, name, meta_data["type"])
+        #self.players[name] = TYPES_MAP[meta_data["type"]](self.DISPlAY_SURF, self.level, name, meta_data["type"])
+        if self.hosting:
+            self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
+        else:
+            self.players[name] = ClientAvatar(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         self.players_sprites.add(self.players[meta_data['name']])
         self.players[name].world_coords = meta_data["world_coords"]
-        print("created new player {} -> {}".format(name, self.players[meta_data['name']]))
+        logging.info("created new player {} -> {}".format(name, self.players[meta_data['name']]))
 
     def _host_main_loop(self):
         while True:
-            self.DISPlAY_SURF.fill((0, 0xff, 0xff))
-            self._check_events()  # Check events
-            # Update levelsd
+            #self.DISPlAY_SURF.fill((0, 0xff, 0xff))
+            self._check_events()  # Check events like key presses and update global vars
+            # Update level
             self.level.update()
             # Update player
             for key in self.keys_down:
                 self.player.press_key(key)
             self.do_networking()
             self.players_sprites.update()
-            self.players_sprites.draw(self.DISPlAY_SURF)
+            try:
+                self.players_sprites.draw(self.DISPlAY_SURF)
+            except pygame.error:
+                logging.warning("syrface was locked while Blitting")
+            pygame.display.set_caption("Host level_offset: {} {}".format(self.level.x_offset, self.level.y_offset))
             pygame.display.update()  # Must be last two lines
             self.clock.tick(60)
 
     def _client_main_loop(self):
         while True:
-            self.DISPlAY_SURF.fill((0, 0xff, 0xff))
+            #self.DISPlAY_SURF.fill((0, 0xff, 0xff))
             self._check_events()  # Check events
             # Update levelsd
             self.level.update()
             # Update player send key presses to server
             self.do_networking()
+            pygame.display.set_caption("{}: {}".format(self.player.name, self.player.world_coords))
             self.players_sprites.update()
             self.players_sprites.draw(self.DISPlAY_SURF)
             pygame.display.update()  # Must be last two lines
@@ -112,15 +119,15 @@ class Game:
                     self.keys_down.remove(event.key)
             elif event.type == QUIT:
                 logging.info("Quitting game")
-                #self.network.close()
+                self.network.close()
                 pygame.quit()
                 sys.exit()
 
     def collect_players_states(self):
-        game_state = {}
-        # for now just collecting world coordinates
+        game_state = []
+        # for now just collecting meta data
         for name in self.players:
-            game_state[name] = self.players[name].get_meta_data()
+            game_state.append(self.players[name].get_meta_data())
         return game_state
 
 
