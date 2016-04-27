@@ -10,6 +10,8 @@ class UserProfile(models.Model):
     avatar = models.ImageField(blank=True, upload_to='static/uploads')
     about = models.TextField(blank=True)
 
+    friends = models.ManyToManyField('self', blank=True)
+
     def __str__(self):
         return  self.name
 

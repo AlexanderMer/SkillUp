@@ -9,4 +9,7 @@ urlpatterns = (
     url(r'^login/$', views.user_login, name='login'),
     url(r'^logout/$', views.user_logout, name='logout'),
     url(r'^id(?P<profile_id>\d+)/edit/$', views.edit, name='edit'),
+    url(r'^id(?P<profile_id>\d+)/del/(?P<post_id>\d+)/$', views.delete_post, name='delete_post'),
+    url(r'^id(?P<profile_id>\d+)/add/$', views.add_to_friends, name='add'),
+    url(r'^id(?P<profile_id>\d+)/remove/$', views.remove_friend, name='remove'),
 )

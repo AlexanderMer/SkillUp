@@ -22,11 +22,30 @@
 {% if wall_posts %}
     {% for post in wall_posts %}
     <div>
+        {% if user.userprofile.id == post.sender.id or proflie.id == user.userprofile.id %}
+           <span><a href="{% url 'person:delete_post' profile.id post.id%}">Delete post</a> </span>
+        {% endif %}
         <p><b>{{ post.sender }}</b>, said at  <i>{{ post.pub_date }}</i></p><br>
         {{ post.body }}
     </div><br>
     {% endfor %}
 {% else %}
     <p>No posts yet!</p>
+{% endif %}
+  {% if user.is_authenticated and user.userprofile.id != profile.id %}
+ {% if not user.userprofile in profile.friends.all%}
+    <a href="{% url 'person:add' profile.id %}">Be a friend with {{ profile.name }}</a><br>
+  {% else %}
+    <p>Already friend</p>
+<a href="{% url 'person:remove' profile.id%}">Remove {{ profile.name }} from friends</a>
+  {% endif %}
+{% endif %}
+
+{% if profile.friends.count > 0 %}
+  {% for friend in friends %}
+    <a href="{% url 'person:details' friend.id%}">{{ friend.name }}</a><br>
+  {% endfor %}
+{% else %}
+ <p>{{ profile.name }} has no friends yet</p>
 {% endif %}
 {% endblock %}

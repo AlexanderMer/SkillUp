@@ -17,6 +17,7 @@ def details(request, profile_id):
     profile = UserProfile.objects.get(id=profile_id)
     wall_posts = profile.wallpost_set.order_by('-pub_date')  # - before pub_date means in descending order
     form = WallPostForm()
+    friends = profile.friends.all()
     if request.POST:
         if not request.user.is_authenticated():  # Prevents unauthenticated user from posting
             return redirect('person:login')
@@ -32,7 +33,8 @@ def details(request, profile_id):
             print("form is not valid")
     return render(request, "details.html", {'profile': profile,
                                             'wall_posts':wall_posts,
-                                            'form':form})
+                                            'form':form,
+                                            'friends':friends})
 
 def register(request):
     if request.POST:
@@ -94,3 +96,21 @@ def edit(request, profile_id):
                 print("Form is not valid!")
         return render(request, "edit.html", {'profile':profile,
                                          'profile_form':profile_form})
+
+def delete_post(request, profile_id, post_id):
+    if not request.user.is_authenticated():
+        return redirect('person:login')
+    cur_user = request.user.userprofile.id
+    profile = UserProfile.objects.get(id=profile_id)
+    post = profile.wallpost_set.get(id=post_id)
+    if post.sender.id == cur_user or int(profile_id) == cur_user:
+        post.delete()
+    return redirect('person:details', profile_id)
+
+def add_to_friends(request, profile_id):
+    request.user.userprofile.friends.add(UserProfile.objects.get(id=profile_id))
+    return redirect('person:details', profile_id)
+
+def remove_friend(request, profile_id):
+    request.user.userprofile.friends.remove(UserProfile.objects.get(id=profile_id))
+    return redirect('person:details', profile_id)
