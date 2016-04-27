@@ -1,4 +1,4 @@
-import pygame, sys, network_manager, logging
+import pygame, sys, network_manager, logging, ctypes
 from pygame.locals import *
 from characters import *
 from levels import *
@@ -15,12 +15,13 @@ logging.basicConfig(level=logging.DEBUG)
 class Game:
     def __init__(self, hosting=1):
         pygame.init()
+        user32 = ctypes.windll.user32
         # Initiating global vars
         self.hosting = hosting
         self.clock = pygame.time.Clock()
         self.keys_down = []
-        self.WINDOW_WIDTH = 1920
-        self.WINDOW_HEIGHT = 1800
+        self.WINDOW_WIDTH = user32.GetSystemMetrics(0)
+        self.WINDOW_HEIGHT = user32.GetSystemMetrics(1)
         self.network = 0  # Network manager instance. Either Server or Client
         self.do_networking = 0  # method which is called every tick
         self.player = 0
