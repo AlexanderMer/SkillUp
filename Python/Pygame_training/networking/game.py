@@ -19,8 +19,8 @@ class Game:
         self.hosting = hosting
         self.clock = pygame.time.Clock()
         self.keys_down = []
-        self.WINDOW_WIDTH = 800
-        self.WINDOW_HEIGHT = 600
+        self.WINDOW_WIDTH = 1920
+        self.WINDOW_HEIGHT = 1800
         self.network = 0  # Network manager instance. Either Server or Client
         self.do_networking = 0  # method which is called every tick
         self.player = 0
@@ -102,7 +102,8 @@ class Game:
             except pygame.error:
                 logging.warning("surface was locked while Blitting")
             #pygame.display.set_caption("Host level_offset: {} {}".format(self.level.x_offset, self.level.y_offset))
-            pygame.display.set_caption("m_coords {} {}".format(*pygame.mouse.get_pos()))
+            pygame.display.set_caption("m_coords {} {}, {} {}".format(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1],
+                                                                      self.player.rect.centerx, self.player.rect.centery))
             pygame.display.update()  # Must be last two lines
             self.clock.tick(60)
 
