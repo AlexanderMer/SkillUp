@@ -9,7 +9,7 @@ MAGE = "Mage"
 
 class Avatar(pygame.sprite.Sprite):
     def __init__(self, screen, level, name, type):
-        super().__init__()
+        super(Avatar, self).__init__()
         self.name = name
         self.character_type = type
         self.level = level
@@ -83,9 +83,9 @@ class Avatar(pygame.sprite.Sprite):
         self.rect.centerx, self.rect.centery = self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1]
         self._check_map_borders()
         # Move with mouse
-        velocity = [max(-self.movement_speed, min(self.movement_speed, -r + m)) for r, m in zip(self.rect.center, pygame.mouse.get_pos())]
-        self.move_avatar(velocity)
-        self.velocity = velocity
+        #velocity = [max(-self.movement_speed, min(self.movement_speed, -r + m)) for r, m in zip(self.rect.center, pygame.mouse.get_pos())]
+        #self.move_avatar(velocity)
+        #self.velocity = velocity
         # Update crosshair
         self.crosshair.rect.center = pygame.mouse.get_pos()
         # Calculate text's Y coordinate so it's right above sprite's head
@@ -115,13 +115,13 @@ class Avatar(pygame.sprite.Sprite):
             self.level.move_map((0, -self.movement_speed))
         if self.rect.centery <= self.level.marginy:
             self.level.move_map((0, self.movement_speed))'''
-        if self.rect.centerx >= (self.screen.get_width() / 2) - self.rect.width:
+        if self.rect.centerx > (self.screen.get_width() / 2) + self.rect.width:
             self.level.move_map((-self.movement_speed, 0))
-        else:
+        elif self.rect.centerx < (self.screen.get_width() / 2) - self.rect.width:
             self.level.move_map((self.movement_speed, 0))
-        if self.rect.centery >= (self.screen.get_height() / 2) - self.rect.height:
+        if self.rect.centery >= (self.screen.get_height() / 2) + self.rect.height:
             self.level.move_map((0, -self.movement_speed))
-        else:
+        elif self.rect.centery < (self.screen.get_height() / 2) - self.rect.height:
             self.level.move_map((0, self.movement_speed))
 
 

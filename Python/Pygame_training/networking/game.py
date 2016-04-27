@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 #TODO Make the fucking game!
 
 class Game:
-    def __init__(self, hosting=0):
+    def __init__(self, hosting=1):
         pygame.init()
         # Initiating global vars
         self.hosting = hosting
@@ -39,7 +39,7 @@ class Game:
     def do_client_networking(self):
         """Must be called every tick if game is run in CLIENT mode"""
         self.network.send_message(Message(KEYS_PRESSED, (self.player.name, self.keys_down)))
-        self.network.send_message(Message(PLAYER_VELOCITY, (self.player.name, self.player.velocity)))
+        #self.network.send_message(Message(PLAYER_VELOCITY, (self.player.name, self.player.velocity)))
 
     def new_game(self, hosting_game):
         logging.info("New level initiated")
@@ -140,6 +140,9 @@ class Game:
         for name in self.players:
             game_state.append(self.players[name].get_meta_data())
         return game_state
+
+
+
 
 
 Game()
