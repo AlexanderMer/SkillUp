@@ -127,6 +127,11 @@ class Game:
             elif event.type == KEYUP:
                 if event.key in self.keys_down:
                     self.keys_down.remove(event.key)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.player.crosshair.image.fill((255, 0, 0,))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.player.crosshair.image.fill((255, 255, 255,))
+                self.player.fire_projectile()
             elif event.type == QUIT:
                 logging.info("Quitting game")
                 self.network.close()

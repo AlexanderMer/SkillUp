@@ -19,6 +19,7 @@ class Avatar(pygame.sprite.Sprite):
         self.velocity = [0, 0]
         self.movement_speed = 4  # number of pixels traveled per frame
         self.looking_right = 0
+        self.projectiles = []
         # Dictionary containing key bindings to functions and their arguments
         self.keys_map = {
             K_w: (self.move_avatar, (0, -self.movement_speed)),
@@ -33,6 +34,11 @@ class Avatar(pygame.sprite.Sprite):
         self.crosshair = Crosshair()
         self.spawn()
         logging.info("avatar {} spawned".format(self.name))
+
+    def fire_projectile(self):
+        projectile = Projectile()
+        self.projectiles.append(projectile)
+        projectile.velocity = [10, 10]
 
     def get_meta_data(self):
         return {
@@ -65,10 +71,7 @@ class Avatar(pygame.sprite.Sprite):
         if -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0 and self._check_pos(self.world_coords[0], new_world_y):
             self.world_coords = [self.world_coords[0], new_world_y]
         # Turn image right or left
-        if delta[0] < 0 and self.looking_right:
-            self.image = pygame.transform.flip(self.image, 1, 0)
-            self.looking_right = not self.looking_right
-        elif delta[0] > 0 and not self.looking_right:
+        if delta[0] < 0 and self.looking_right or delta[0] > 0 and not self.looking_right:
             self.image = pygame.transform.flip(self.image, 1, 0)
             self.looking_right = not self.looking_right
 
@@ -87,10 +90,13 @@ class Avatar(pygame.sprite.Sprite):
         #self.move_avatar(velocity)
         #self.velocity = velocity
         # Update crosshair
-        self.crosshair.rect.center = pygame.mouse.get_pos()
+        self.crosshair.update()
         # Calculate text's Y coordinate so it's right above sprite's head
         self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
         self.name_tag.render()
+        # update projectiles
+        for projectile in self.projectiles:
+            projectile.update()
 
     def _check_pos(self, x, y):
         """This method returns false if player is colliding with unwalkable tiles"""
@@ -123,7 +129,6 @@ class Avatar(pygame.sprite.Sprite):
             self.level.move_map((0, -self.movement_speed))
         elif self.rect.centery < (self.screen.get_height() / 2) - self.rect.height:
             self.level.move_map((0, self.movement_speed))
-
 
     def spawn(self):
         """Spwans avatar in a random location on the map
