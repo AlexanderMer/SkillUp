@@ -2,7 +2,6 @@ import pygame, random, logging
 from pygame.locals import *
 from name_tag import Name_tag
 from game_objects import *
-from network_manager import *
 
 # CONSTANTS
 #MAGE = 1
@@ -71,6 +70,9 @@ class Avatar(pygame.sprite.Sprite):
         The method first assigns player's global position and then calculates where he should appear on the window"""
         new_world_x = self.world_coords[0] - delta[0]
         new_world_y = self.world_coords[1] - delta[1]
+        '''if (-self.level.LEVEL_WIDTH_PX <= new_world_x <= 0 and -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0
+            and self._check_pos(new_world_x, new_world_y)):
+            self.world_coords = [new_world_x, new_world_y]'''
         if -self.level.LEVEL_WIDTH_PX <= new_world_x <= 0 and self._check_pos(new_world_x, self.world_coords[1]):
             self.world_coords = [new_world_x, self.world_coords[1]]
         if -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0 and self._check_pos(self.world_coords[0], new_world_y):
@@ -118,6 +120,14 @@ class Avatar(pygame.sprite.Sprite):
 
     def _check_map_borders(self):
         """This method is responsible for all actions related to player position"""
+        '''if self.rect.centerx >= self.screen.get_width() - self.level.marginx:
+            self.level.move_map((-self.movement_speed, 0))
+        if self.rect.centerx <= self.level.marginx:
+            self.level.move_map((self.movement_speed, 0))
+        if self.rect.centery >= self.screen.get_height() - self.level.marginy:
+            self.level.move_map((0, -self.movement_speed))
+        if self.rect.centery <= self.level.marginy:
+            self.level.move_map((0, self.movement_speed))'''
         if self.rect.centerx > (self.screen.get_width() / 2) + self.rect.width:
             self.level.move_map((-self.movement_speed, 0))
         elif self.rect.centerx < (self.screen.get_width() / 2) - self.rect.width:
@@ -144,18 +154,6 @@ class GuestAvatar(Avatar):
         """Must be empty!"""
         pass
 
-    def update(self):
-    # Move with mouse, velocity should be passed from client
-        #self.move_avatar(self.velocity)
-    # Update coordinates
-        self.rect.center = (self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1],)
-    # Calculate text's Y coordinate so it's right above sprite's head
-        self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
-        self.name_tag.render()
-    # update projectiles
-        self.projectile_sprites.update()
-        self.projectile_sprites.draw(self.screen)
-
 
 class GuestMage(GuestAvatar):
     def __init__(self, surface, level, name, character_type):
@@ -176,9 +174,8 @@ class Mage(Avatar):
 
 
 class ClientAvatar(Avatar):
-    def __init__(self, screen, level, name, character_type, network):
+    def __init__(self, screen, level, name, character_type):
         super(ClientAvatar, self).__init__(screen, level, name, character_type)
-        self.network = network
 
     def press_key(self, key):
         pass
