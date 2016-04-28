@@ -13,15 +13,17 @@ logging.basicConfig(level=logging.DEBUG)
 #TODO Make the fucking game!
 
 class Game:
-    def __init__(self, hosting=1):
+    def __init__(self, hosting=0):
         pygame.init()
         user32 = ctypes.windll.user32
         # Initiating global vars
         self.hosting = hosting
         self.clock = pygame.time.Clock()
         self.keys_down = []
-        self.WINDOW_WIDTH = user32.GetSystemMetrics(0)
-        self.WINDOW_HEIGHT = user32.GetSystemMetrics(1)
+        #self.WINDOW_WIDTH = user32.GetSystemMetrics(0)
+        #self.WINDOW_HEIGHT = user32.GetSystemMetrics(1)
+        self.WINDOW_WIDTH = 800
+        self.WINDOW_HEIGHT = 600
         self.network = 0  # Network manager instance. Either Server or Client
         self.do_networking = 0  # method which is called every tick
         self.player = 0
@@ -39,8 +41,8 @@ class Game:
 
     def do_client_networking(self):
         """Must be called every tick if game is run in CLIENT mode"""
-        self.network.send_message(Message(KEYS_PRESSED, (self.player.name, self.keys_down)))
-        #self.network.send_message(Message(PLAYER_VELOCITY, (self.player.name, self.player.velocity)))
+        #self.network.send_message(Message(KEYS_PRESSED, (self.player.name, self.keys_down)))
+        self.network.send_message(Message(PLAYER_META, (self.player.name, self.player.get_meta_data())))
 
     def new_game(self, hosting_game):
         logging.info("New level initiated")
@@ -59,11 +61,11 @@ class Game:
             self._group_sprites()
             self._host_main_loop()  # MUST BE LAST LINE!
         else:
-            self.player = ClientAvatar(self.DISPlAY_SURF, self.level, my_name, "Mage")
+            self.network = network_manager.GameClient(self)  #  host='192.168.0.101'
+            self.player = ClientAvatar(self.DISPlAY_SURF, self.level, my_name, "Mage", self.network)
             pygame.display.set_caption("Client {}".format(self.player.name))
             self.do_networking = self.do_client_networking
             self.world_coords = (256, 256)  # for testing
-            self.network = network_manager.GameClient(self)
             # connecting to host
             self.network.send_message(Message(network_manager.NEW_PLAYER, self.player.get_meta_data()))
             self._group_sprites()
@@ -75,12 +77,9 @@ class Game:
 
     def add_new_player(self, meta_data):
         name = meta_data['name']
-        #self.players[name] = TYPES_MAP[meta_data["type"]](self.DISPlAY_SURF, self.level, name, meta_data["type"])
         if self.hosting:
-            #self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
             self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         else:
-            #self.players[name] = ClientAvatar(self.DISPlAY_SURF, self.level, name, meta_data["type"])
             self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         self.players_sprites.add(self.players[meta_data['name']])
         self.players[name].world_coords = meta_data["world_coords"]
@@ -116,10 +115,11 @@ class Game:
             self.level.update()
             # Update player send key presses to server
             self.do_networking()
-            pygame.display.set_caption("{}: {}".format(self.player.name, self.player.world_coords))
             self.players_sprites.update()
             self.players_sprites.draw(self.DISPlAY_SURF)
             pygame.display.update()  # Must be last two lines
+            pygame.display.set_caption("rect {}, w {}, m {}, v {}".format(self.player.rect.center, self.player.world_coords,
+                                                                    pygame.mouse.get_pos(), self.player.velocity))
             self.clock.tick(60)
 
     def _check_events(self):

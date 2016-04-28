@@ -1,4 +1,4 @@
-import pygame, logging, colours
+import pygame, logging, colours, time
 
 
 class GameObject(pygame.sprite.Sprite):
@@ -7,6 +7,7 @@ class GameObject(pygame.sprite.Sprite):
         self.image = self.load_image()
         self.rect = self.image.get_rect()
         self.world_coords = [100, 100]
+
 
     def load_image(self, path="..\game_sprites\game_object.png"):
         try:
@@ -33,9 +34,12 @@ class Projectile(GameObject):
         self.level = level
         self.speed = 12  # Number of pixels projectile moves per update
         self.velocity = [0, 0]
+        self.bday = time.time()
         logging.info("Projectile created")
 
     def update(self):
+        if time.time() - self.bday > 5:
+            self.kill()
         self.world_coords = [w + v for w, v in zip(self.world_coords, self.velocity)]
         self.rect.center = (self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1],)
         if not 0 <= -self.world_coords[0] <= self.level.LEVEL_WIDTH_PX or not 0 <= -self.world_coords[1] <= self.level.LEVEL_HEIGHT_PX:
@@ -44,6 +48,9 @@ class Projectile(GameObject):
 
     def on_collide(self, player):
         pass
+
+    def kill_projectile(self):
+        self.kill()
 
 
 class CharProjectile(Projectile):

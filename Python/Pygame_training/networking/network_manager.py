@@ -14,6 +14,7 @@ PLAYERS_STATES = 2  # Players position each player's meta_data
 PLAYER_QUIT = 3  # player's name
 KEYS_PRESSED = 4  # tuple (name, keys)
 PLAYER_VELOCITY = 5  # tuple (name, velocity)
+PLAYER_META = 6
 
 class Message():
     def __init__(self, type, message):
@@ -75,18 +76,26 @@ class GameServer(threading.Thread):
                     self.game.players[msg.message[0]].press_key(key)
             elif msg.message_type == PLAYERS_STATES:
                 logging.info("SERVER PLAYER STATES RECEIVED!!!!!")
+            elif msg.message_type == PLAYER_META:
+                # for now, just update world coords
+                self.game.players[msg.message['name']].world_coords = msg.message['world_coords']
                 #self.game.players[msg.message["name"]].world_coords = msg.message["world_coords"]
             elif msg.message_type == PLAYER_QUIT:
                 conn.close()
-        #conn.close() # Close
+        conn.close() # Close
 
     def run(self):
         print('Waiting for connections on port %s' % (self.port))
         # We need to run a loop and create a new thread for each connection
         while True:
-            conn = self.socket.accept()
-            logging.info("new connection accepted: {}".format(conn))
-            threading.Thread(target=self.add_new_player, args=(conn,)).start()
+            try:
+                conn = self.socket.accept()
+            except OSError as e:
+                print(e)
+                return
+            else:
+                logging.info("new connection accepted: {}".format(conn))
+                threading.Thread(target=self.add_new_player, args=(conn,)).start()
 
     def send_to_all(self, bytes):
         for user in self.users:
