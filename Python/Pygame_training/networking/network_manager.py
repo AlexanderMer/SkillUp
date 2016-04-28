@@ -13,7 +13,6 @@ NEW_PLAYER = 1  # Meta data
 PLAYERS_STATES = 2  # Players position each player's meta_data
 PLAYER_QUIT = 3  # player's name
 KEYS_PRESSED = 4  # tuple (name, keys)
-PLAYER_VELOCITY = 5  # tuple (name, velocity)
 
 class Message():
     def __init__(self, type, message):
@@ -67,12 +66,10 @@ class GameServer(threading.Thread):
         while True:
             # for now the data recieved should be name of player and new world coords
             msg = conn.recv()
-            if msg.message_type == PLAYER_VELOCITY:
-                self.game.players[msg.message[0]].velocity = msg.message[1]
             if msg.message_type == KEYS_PRESSED:
-                #with self.lock:
-                for key in msg.message[1]:
-                    self.game.players[msg.message[0]].press_key(key)
+                with self.lock:
+                    for key in msg.message[1]:
+                        self.game.players[msg.message[0]].press_key(key)
             elif msg.message_type == PLAYERS_STATES:
                 logging.info("SERVER PLAYER STATES RECEIVED!!!!!")
                 #self.game.players[msg.message["name"]].world_coords = msg.message["world_coords"]

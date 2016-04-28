@@ -11,7 +11,7 @@ class Tile(pygame.sprite.Sprite):
             self.image.fill(colours.random_color())
         self.rect = self.image.get_rect()
         self.tile_id = tile_id
-        self.walkable = walkable
+        self.walkable =walkable
 
 
 #TODO make level savable and loadable in JSON formats (pickle causes weird bugs, suspect becauseduring loading
@@ -32,8 +32,7 @@ class Sprite_Level:
         self.KEYS_MAP = {}
         self.x_offset, self.y_offset = 0, 0  # Used to move map around
         self.x_offset_step, self.y_offset_step = 45, 45  # Speed with which map actually moves
-        self.marginx, self.marginy = surface.get_size()[0], surface.get_size()[1] # when player approaches any end by margin pixels, map will respond and move accordingly
-        print(self.marginx, self.marginy)
+        self.margin = 100  # when player approaches any end by margin pixels, map will respond and move accordingly
         # self.load_level()
 
     def save_json(self):

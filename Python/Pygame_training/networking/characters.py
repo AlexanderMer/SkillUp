@@ -1,7 +1,6 @@
 import pygame, random, logging
 from pygame.locals import *
 from name_tag import Name_tag
-from game_objects import *
 
 # CONSTANTS
 #MAGE = 1
@@ -17,7 +16,7 @@ class Avatar(pygame.sprite.Sprite):
         self.screen = screen
         self.rect = self.image.get_rect()
         self.velocity = [0, 0]
-        self.movement_speed = 4  # number of pixels traveled per frame
+        self.movement_speed = 7  # number of pixels traveled per frame
         self.looking_right = 0
         # Dictionary containing key bindings to functions and their arguments
         self.keys_map = {
@@ -30,7 +29,6 @@ class Avatar(pygame.sprite.Sprite):
         self.collided = 0  # List of sprites which are in contact with player
         self.curent_tile = 0  # Tile occupied by player at the moment
         self.world_coords = (100, 100)
-        self.crosshair = Crosshair()
         self.spawn()
         logging.info("avatar {} spawned".format(self.name))
 
@@ -57,13 +55,9 @@ class Avatar(pygame.sprite.Sprite):
         The method first assigns player's global position and then calculates where he should appear on the window"""
         new_world_x = self.world_coords[0] - delta[0]
         new_world_y = self.world_coords[1] - delta[1]
-        '''if (-self.level.LEVEL_WIDTH_PX <= new_world_x <= 0 and -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0
+        if (-self.level.LEVEL_WIDTH_PX <= new_world_x <= 0 and -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0
             and self._check_pos(new_world_x, new_world_y)):
-            self.world_coords = [new_world_x, new_world_y]'''
-        if -self.level.LEVEL_WIDTH_PX <= new_world_x <= 0 and self._check_pos(new_world_x, self.world_coords[1]):
-            self.world_coords = [new_world_x, self.world_coords[1]]
-        if -self.level.LEVEL_HEIGHT_PX <= new_world_y <= 0 and self._check_pos(self.world_coords[0], new_world_y):
-            self.world_coords = [self.world_coords[0], new_world_y]
+            self.world_coords = [new_world_x, new_world_y]
         # Turn image right or left
         if delta[0] < 0 and self.looking_right:
             self.image = pygame.transform.flip(self.image, 1, 0)
@@ -79,51 +73,32 @@ class Avatar(pygame.sprite.Sprite):
             self.keys_map[key][0](self.keys_map[key][1])
 
     def update(self):
-        # Update coordinates
+        #self.rect.centerx, self.rect.centery = self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1]
         self.rect.centerx, self.rect.centery = self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1]
         self._check_map_borders()
-        # Move with mouse
-        velocity = [max(-self.movement_speed, min(self.movement_speed, -r + m)) for r, m in zip(self.rect.center, pygame.mouse.get_pos())]
-        self.move_avatar(velocity)
-        self.velocity = velocity
-        # Update crosshair
-        self.crosshair.rect.center = pygame.mouse.get_pos()
         # Calculate text's Y coordinate so it's right above sprite's head
         self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
         self.name_tag.render()
+        #self._check_pos()
 
     def _check_pos(self, x, y):
         """This method returns false if player is colliding with unwalkable tiles"""
         x, y = int((-x) / self.level.TILE_SIZE), int(-y / self.level.TILE_SIZE)
         #logging.info("{}: x {}, y {}, width {} height {}".format(str(self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable),
         #                                                         x, y, self.level.LEVEL_WIDTH, self.level.LEVEL_HEIGHT))
-
-        # temp workaround a bug, where player can make one step outside map
-        if x == self.level.LEVEL_WIDTH:
-            x -= 1
-        if y == self.level.LEVEL_HEIGHT:
-            y -= 1
         return self.level.LEVEL[x * self.level.LEVEL_HEIGHT + y].walkable
 
     def _check_map_borders(self):
         """This method is responsible for all actions related to player position"""
-        '''if self.rect.centerx >= self.screen.get_width() - self.level.marginx:
+        # self.rect.clamp_ip(self.screen.get_rect())  # Doesn't allow player to move beyond the screen
+        if self.rect.centerx >= self.screen.get_width() - self.level.margin:
             self.level.move_map((-self.movement_speed, 0))
-        if self.rect.centerx <= self.level.marginx:
+        if self.rect.centerx <= self.level.margin:
             self.level.move_map((self.movement_speed, 0))
-        if self.rect.centery >= self.screen.get_height() - self.level.marginy:
+        if self.rect.centery >= self.screen.get_height() - self.level.margin:
             self.level.move_map((0, -self.movement_speed))
-        if self.rect.centery <= self.level.marginy:
-            self.level.move_map((0, self.movement_speed))'''
-        if self.rect.centerx >= (self.screen.get_width() / 2) - self.rect.width:
-            self.level.move_map((-self.movement_speed, 0))
-        else:
-            self.level.move_map((self.movement_speed, 0))
-        if self.rect.centery >= (self.screen.get_height() / 2) - self.rect.height:
-            self.level.move_map((0, -self.movement_speed))
-        else:
+        if self.rect.centery <= self.level.margin:
             self.level.move_map((0, self.movement_speed))
-
 
     def spawn(self):
         """Spwans avatar in a random location on the map
@@ -167,6 +142,16 @@ class ClientAvatar(Avatar):
 
     def press_key(self, key):
         pass
+
+    #def update(self):
+     #   #self.world_coords = (self.level.x_offset - self.rect.centerx, self.level.y_offset - self.rect.centery)
+      #  # Calculate text's Y coordinate so it's right above sprite's head
+       # self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
+        #self.name_tag.render()
+        #"""Should translate world coords into rectX and rectY"""
+        #self.rect.centerx, self.rect.centery = -self.world_coords[0] + self.level.x_offset, \
+          #                         -self.world_coords[1] + self.level.y_offset
+
 
 TYPES_MAP = {
     MAGE: Mage
