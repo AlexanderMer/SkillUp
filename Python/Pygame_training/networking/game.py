@@ -1,4 +1,4 @@
-import pygame, sys, network_manager, logging
+import pygame, sys, network_manager, pickle, logging
 from pygame.locals import *
 from characters import *
 from levels import *
@@ -10,6 +10,8 @@ logging.basicConfig(level=logging.DEBUG)
 # Each tick Clients send key_presses to Host, which in turn must process them
 # After that host sends back the state of game to clients
 
+#TODO Make new classes so guest don't move entire map with htem on host PC!
+#TODO Make characters appear in client window
 #TODO Make the fucking game!
 
 class Game:
@@ -33,11 +35,11 @@ class Game:
 
     def do_host_networking(self):
         """Must be called every tick if HOSTING game"""
-        self.network.send_to_all(Message(PLAYERS_STATES, self.collect_players_states()))
+        self.network.send_to_all(pickle.dumps(Message(PLAYERS_STATES, self.collect_players_states())))
 
     def do_client_networking(self):
         """Must be called every tick if game is run in CLIENT mode"""
-        self.network.send_message(Message(KEYS_PRESSED, (self.player.name, self.keys_down)))
+        self.network.send_message(pickle.dumps(Message(KEYS_PRESSED, (self.player.name, self.keys_down))))
 
     def new_game(self, hosting_game):
         # Setting up level
@@ -49,7 +51,7 @@ class Game:
         if hosting_game:
             self.player = Mage(self.DISPlAY_SURF, self.level, my_name, "Mage")
             pygame.display.set_caption("Host")
-            self.network = network_manager.GameServer(self)
+            self.network = network_manager.Server(self)
             self.do_networking = self.do_host_networking
             self.players_sprites.add(self.player)
             self._host_main_loop()  # MUST BE LAST LINE!
@@ -58,9 +60,9 @@ class Game:
             pygame.display.set_caption("Client {}".format(self.player.name))
             self.do_networking = self.do_client_networking
             self.world_coords = (256, 256)  # for testing
-            self.network = network_manager.GameClient(self)
+            self.network = network_manager.Client(self)
             # connecting to host
-            self.network.send_message(Message(network_manager.NEW_PLAYER, self.player.get_meta_data()))
+            self.network.send_message(pickle.dumps(Message(network_manager.NEW_PLAYER, self.player.get_meta_data())))
             self.players_sprites.add(self.player)
             self._client_main_loop()  # MUST BE LAST LINE!
 
@@ -127,7 +129,6 @@ class Game:
     def collect_players_states(self):
         game_state = []
         # for now just collecting meta data
-        game_state.append(self.player.get_meta_data())
         for name in self.players:
             game_state.append(self.players[name].get_meta_data())
         return game_state
