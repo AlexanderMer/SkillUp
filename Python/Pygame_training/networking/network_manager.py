@@ -136,7 +136,7 @@ class GameClient:
                         self.game.player.world_coords = player["world_coords"]
                     else:
                         # TODO implement better protocol, one that doesn't require comparison
-                        #if player['name'] in self.game.players:
+                       #if player['name'] in self.game.players:
                         self.game.players[player["name"]].world_coords = player["world_coords"]
             elif msg.message_type == NEW_PLAYER:
                 logging.info("New player Message received")

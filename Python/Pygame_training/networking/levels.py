@@ -3,7 +3,7 @@ import pygame, random, pickle, colours
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, image_path, walkable=True, tile_id=1):
-        super(Tile, self).__init__()
+        super().__init__()
         try:
             self.image = pygame.image.load(image_path).convert()
         except pygame.error:
@@ -32,7 +32,7 @@ class Sprite_Level:
         self.KEYS_MAP = {}
         self.x_offset, self.y_offset = 0, 0  # Used to move map around
         self.x_offset_step, self.y_offset_step = 45, 45  # Speed with which map actually moves
-        self.marginx, self.marginy = 100, 100 # when player approaches any end by margin pixels, map will respond and move accordingly
+        self.marginx, self.marginy = surface.get_size()[0], surface.get_size()[1] # when player approaches any end by margin pixels, map will respond and move accordingly
         print(self.marginx, self.marginy)
         # self.load_level()
 
