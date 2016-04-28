@@ -20,7 +20,6 @@ class Avatar(pygame.sprite.Sprite):
         self.movement_speed = 4  # number of pixels traveled per frame
         self.looking_right = 0
         self.projectiles = []
-        self.projectile_sprites = pygame.sprite.Group()
         # Dictionary containing key bindings to functions and their arguments
         self.keys_map = {
             K_w: (self.move_avatar, (0, -self.movement_speed)),
@@ -37,15 +36,9 @@ class Avatar(pygame.sprite.Sprite):
         logging.info("avatar {} spawned".format(self.name))
 
     def fire_projectile(self):
-        projectile = Projectile(self.level)
-        projectile.world_coords = self.world_coords
+        projectile = Projectile()
         self.projectiles.append(projectile)
-        self.projectile_sprites.add(projectile)
-        velocity = [max(-projectile.speed, min(-int((m - r) / 10), projectile.speed)) for m, r in zip(pygame.mouse.get_pos(), self.rect.center)]
-        vel_diff = projectile.speed - max(velocity)
-        #projectile.velocity = [v - -vel_diff if v < 0 else vel_diff for v in velocity]
-        projectile.velocity = velocity
-        print(projectile.velocity)
+        projectile.velocity = [10, 10]
 
     def get_meta_data(self):
         return {
@@ -89,21 +82,21 @@ class Avatar(pygame.sprite.Sprite):
             self.keys_map[key][0](self.keys_map[key][1])
 
     def update(self):
-    # Update coordinates
-        self.rect.center = (self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1],)
+        # Update coordinates
+        self.rect.centerx, self.rect.centery = self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1]
         self._check_map_borders()
-    # Move with mouse
-        velocity = [max(-self.movement_speed, min(self.movement_speed, -r + m)) for r, m in zip(self.rect.center, pygame.mouse.get_pos())]
-        self.move_avatar(velocity)
-        self.velocity = velocity
-    # Update crosshair
+        # Move with mouse
+        #velocity = [max(-self.movement_speed, min(self.movement_speed, -r + m)) for r, m in zip(self.rect.center, pygame.mouse.get_pos())]
+        #self.move_avatar(velocity)
+        #self.velocity = velocity
+        # Update crosshair
         self.crosshair.update()
-    # Calculate text's Y coordinate so it's right above sprite's head
+        # Calculate text's Y coordinate so it's right above sprite's head
         self.name_tag.update_pos((self.rect.left, self.rect.center[1] - self.rect.height / 2))
         self.name_tag.render()
-    # update projectiles
-        self.projectile_sprites.update()
-        self.projectile_sprites.draw(self.screen)
+        # update projectiles
+        for projectile in self.projectiles:
+            projectile.update()
 
     def _check_pos(self, x, y):
         """This method returns false if player is colliding with unwalkable tiles"""

@@ -1,1 +1,0 @@
-pyg.exe game.zip

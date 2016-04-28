@@ -6,9 +6,11 @@ class GameObject(pygame.sprite.Sprite):
         super().__init__()
         self.image = self.load_image()
         self.rect = self.image.get_rect()
-        self.world_coords = [100, 100]
+        self.world_coords = [0, 0]
 
-    def load_image(self, path="..\game_sprites\game_object.png"):
+    def load_image(self, path=0):
+        if not path:
+            path = self.image_path
         try:
             return pygame.image.load(path).convert_alpha()
         except:
@@ -28,26 +30,18 @@ class Crosshair(GameObject):
 
 
 class Projectile(GameObject):
-    def __init__(self, level):
+    def __init__(self):
         super(Projectile, self).__init__()
-        self.level = level
-        self.speed = 12  # Number of pixels projectile moves per update
         self.velocity = [0, 0]
         logging.info("Projectile created")
 
-    def update(self):
+    def update(self, players):
         self.world_coords = [w + v for w, v in zip(self.world_coords, self.velocity)]
-        self.rect.center = (self.level.x_offset - self.world_coords[0], self.level.y_offset - self.world_coords[1],)
-        if not 0 <= -self.world_coords[0] <= self.level.LEVEL_WIDTH_PX or not 0 <= -self.world_coords[1] <= self.level.LEVEL_HEIGHT_PX:
-            self.kill()
-            logging.info("projectile {} killed".format(self))
+        collided = pygame.sprite.spritecollide(self.rect, players)
+        if collided:
+            for player in collided:
+                self.on_collide(player)
 
     def on_collide(self, player):
         pass
-
-
-class CharProjectile(Projectile):
-    def __init__(self, char, level):
-        super(CharProjectile, self).__init__(level)
-        self.char = char
 
