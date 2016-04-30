@@ -77,6 +77,7 @@ class GameServer(threading.Thread):
             elif msg.message_type == FIRE_PROJECTILE:
                 logging.info("Recieved FIRE command")
                 self.game.players[msg.message[0]].fire_projectile(msg.message[1])
+                self.send_to_all(msg, except_user=conn)
             elif msg.message_type == PLAYER_QUIT:
                 conn.close()
         #conn.close() # Close
@@ -89,8 +90,15 @@ class GameServer(threading.Thread):
             logging.info("new connection accepted: {}".format(conn))
             threading.Thread(target=self.add_new_player, args=(conn,)).start()
 
-    def send_to_all(self, bytes):
-        for user in self.users:
+    def send_to_all(self, bytes, except_user=0):
+        if except_user:
+            users = self.users[:]
+            if except_user in users:
+                print("User removed")
+                users.remove(except_user)
+        else:
+            users = self.users[:]
+        for user in users:
             try:
                 user.send(bytes)
             except socket.error:
@@ -140,6 +148,12 @@ class GameClient:
                         # TODO implement better protocol, one that doesn't require comparison
                        #if player['name'] in self.game.players:
                         self.game.players[player["name"]].world_coords = player["world_coords"]
+            elif msg.message_type == FIRE_PROJECTILE:
+                name = msg.message[0]
+                if name == self.game.player.name:
+                    self.game.player.fire_projectile(msg.message[1])
+                else:
+                    self.game.players[name].fire_projectile(msg.message[1])
             elif msg.message_type == NEW_PLAYER:
                 logging.info("New player Message received")
                 self.game.add_new_player(msg.message)
