@@ -76,7 +76,9 @@ class Game:
             self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         self.players_sprites.add(self.players[meta_data['name']])
         self.players[name].world_coords = meta_data["world_coords"]
+        self.players[name].health = meta_data["health"]
         logging.info("created new player {} -> {}".format(name, self.players[meta_data['name']]))
+        print(self.players)
 
     def _host_main_loop(self):
         while True:
@@ -132,14 +134,18 @@ class Game:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.crosshair.image.fill((255, 255, 255,))
                 self.player.fire_projectile()
-                if not self.hosting:
-                    velocity = [-((m - r) / 10) for m, r in zip(pygame.mouse.get_pos(), self.player.rect.center)]
+                velocity = [-((m - r) / 10) for m, r in zip(pygame.mouse.get_pos(), self.player.rect.center)]
+                if self.hosting:
+                    self.network.send_to_all(Message(FIRE_PROJECTILE, (self.player.name, velocity,)))
+                else:
                     self.network.send_message(Message(FIRE_PROJECTILE, (self.player.name, velocity,)))
             elif event.type == QUIT:
                 logging.info("Quitting game")
                 self.network.close()
                 pygame.quit()
                 sys.exit()
+        if self.player.health == 0:
+            self.kill_player()
 
     def collect_players_states(self):
         game_state = []
@@ -148,6 +154,17 @@ class Game:
         for name in self.players:
             game_state.append(self.players[name].get_meta_data())
         return game_state
+
+    def kill_player(self):
+        msg = Message(PLAYER_QUIT, self.player.name)
+        if self.hosting:
+            self.network.send_to_all(msg)
+        else:
+            self.network.send_message(msg)
+            logging.info("Quitting game")
+        self.player.kill()
+
+
 
 
 Game()

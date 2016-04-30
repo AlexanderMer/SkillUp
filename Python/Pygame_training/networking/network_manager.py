@@ -53,17 +53,18 @@ class GameServer(threading.Thread):
         raw_message = conn.recv()  # first, client should pass player meta data
         meta_data = raw_message.message
         logging.info("meta data received {}".format(meta_data))
-        # Send info about game state to new player
+    # Send info about game state to new player
         conn.send(Message(type=NEW_PLAYER, message=self.game.player.get_meta_data()))
         for player in self.game.players:
             conn.send(Message(type=NEW_PLAYER, message=self.game.players[player].get_meta_data()))
         self.game.add_new_player(meta_data)
         logging.info("players currently connected: {}".format(self.game.players))
-        # Inform other players about new connection
+    # Inform other players about new connection
         for user in self.users:
             user.send(raw_message)
             print("sending new player signal to user: {}".format(user))
         self.users.append(conn)  # Append new player AFTER rerouting meta data to players
+    # Main event listening loop
         while True:
             # for now the data recieved should be name of player and new world coords
             msg = conn.recv()
@@ -79,8 +80,13 @@ class GameServer(threading.Thread):
                 self.game.players[msg.message[0]].fire_projectile(msg.message[1])
                 self.send_to_all(msg, except_user=conn)
             elif msg.message_type == PLAYER_QUIT:
-                conn.close()
-        #conn.close() # Close
+                self.send_to_all(msg, except_user=conn)
+                if msg.message in self.game.players.keys():
+                    self.game.players[msg.message].kill()
+                    del self.game.players[msg.message]
+                    #conn.close()
+
+        conn.close() # Close
 
     def run(self):
         print('Waiting for connections on port %s' % (self.port))
@@ -90,7 +96,7 @@ class GameServer(threading.Thread):
             logging.info("new connection accepted: {}".format(conn))
             threading.Thread(target=self.add_new_player, args=(conn,)).start()
 
-    def send_to_all(self, bytes, except_user=0):
+    def send_to_all(self, msg, except_user=0):
         if except_user:
             users = self.users[:]
             if except_user in users:
@@ -100,7 +106,7 @@ class GameServer(threading.Thread):
             users = self.users[:]
         for user in users:
             try:
-                user.send(bytes)
+                user.send(msg)
             except socket.error:
                 logging.error("Could not send data to {}".format(user))
             else:
@@ -135,28 +141,39 @@ class GameClient:
 
     def listen(self):
         while True:
-            msg = self.socket.recv()
-            #logging.info("Got reply {}".format(msg))
-            if msg.message_type == PLAYERS_STATES:
-                # list of dicks with meta_data
-                for player in msg.message:
-                    # temp workaround, should avoid IFs in the future
-                    if player["name"] == self.game.player.name:
-                        self.game.player.world_coords = player["world_coords"]
-                        self.game.player.health = player["health"]
+            try:
+                msg = self.socket.recv()
+            except:
+                logging.error("Error while decoding message")
+            else:
+                #logging.info("Got reply {}".format(msg))
+                if msg.message_type == PLAYERS_STATES:
+                    # list of dicks with meta_data
+                    for player in msg.message:
+                        # temp workaround, should avoid IFs in the future
+                        if player["name"] == self.game.player.name:
+                            self.game.player.world_coords = player["world_coords"]
+                            self.game.player.health = player["health"]
+                        else:
+                            # TODO implement better protocol, one that doesn't require comparison
+                           #if player['name'] in self.game.players:
+                            try:
+                                self.game.players[player["name"]].world_coords = player["world_coords"]
+                            except KeyError as e:
+                                logging.error("Error assigning world_coords. Player with name {} not found".format(player['name']))
+                elif msg.message_type == FIRE_PROJECTILE:
+                    name = msg.message[0]
+                    if name == self.game.player.name:
+                        self.game.player.fire_projectile(msg.message[1])
                     else:
-                        # TODO implement better protocol, one that doesn't require comparison
-                       #if player['name'] in self.game.players:
-                        self.game.players[player["name"]].world_coords = player["world_coords"]
-            elif msg.message_type == FIRE_PROJECTILE:
-                name = msg.message[0]
-                if name == self.game.player.name:
-                    self.game.player.fire_projectile(msg.message[1])
-                else:
-                    self.game.players[name].fire_projectile(msg.message[1])
-            elif msg.message_type == NEW_PLAYER:
-                logging.info("New player Message received")
-                self.game.add_new_player(msg.message)
+                        self.game.players[name].fire_projectile(msg.message[1])
+                elif msg.message_type == NEW_PLAYER:
+                    logging.info("New player Message received")
+                    self.game.add_new_player(msg.message)
+                elif msg.message_type == PLAYER_QUIT:
+                    if msg.message in self.game.players.keys():
+                        self.game.players[msg.message].kill()
+                        del self.game.players[msg.message]
 
     def add_new_player(self, meta):
         print("Client new player is called")
