@@ -17,6 +17,7 @@ class Avatar(pygame.sprite.Sprite):
         self.character_type = type
         self.level = level
         self.surface = surface
+        self.banishing = False
         self.velocity = [0, 0]
         self.movement_speed = 7  # number of pixels traveled per frame
         self.looking_right = 0

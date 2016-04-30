@@ -92,9 +92,13 @@ class GameServer(threading.Thread):
         print('Waiting for connections on port %s' % (self.port))
         # We need to run a loop and create a new thread for each connection
         while True:
-            conn = self.socket.accept()
-            logging.info("new connection accepted: {}".format(conn))
-            threading.Thread(target=self.add_new_player, args=(conn,)).start()
+            try:
+                conn = self.socket.accept()
+            except OSError as e:
+                logging.error("Player disconnected: {}".format(e))
+            else:
+                logging.info("new connection accepted: {}".format(conn))
+                threading.Thread(target=self.add_new_player, args=(conn,)).start()
 
     def send_to_all(self, msg, except_user=0):
         if except_user:
