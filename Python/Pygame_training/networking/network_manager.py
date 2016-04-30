@@ -13,6 +13,7 @@ NEW_PLAYER = 1  # Meta data
 PLAYERS_STATES = 2  # Players position each player's meta_data
 PLAYER_QUIT = 3  # player's name
 KEYS_PRESSED = 4  # tuple (name, keys)
+FIRE_PROJECTILE = 5
 
 class Message():
     def __init__(self, type, message):
@@ -73,6 +74,9 @@ class GameServer(threading.Thread):
             elif msg.message_type == PLAYERS_STATES:
                 logging.info("SERVER PLAYER STATES RECEIVED!!!!!")
                 #self.game.players[msg.message["name"]].world_coords = msg.message["world_coords"]
+            elif msg.message_type == FIRE_PROJECTILE:
+                logging.info("Recieved FIRE command")
+                self.game.players[msg.message[0]].fire_projectile(msg.message[1])
             elif msg.message_type == PLAYER_QUIT:
                 conn.close()
         #conn.close() # Close
@@ -131,6 +135,7 @@ class GameClient:
                     # temp workaround, should avoid IFs in the future
                     if player["name"] == self.game.player.name:
                         self.game.player.world_coords = player["world_coords"]
+                        self.game.player.health = player["health"]
                     else:
                         # TODO implement better protocol, one that doesn't require comparison
                        #if player['name'] in self.game.players:

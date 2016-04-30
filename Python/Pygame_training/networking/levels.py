@@ -32,7 +32,8 @@ class Sprite_Level:
         self.KEYS_MAP = {}
         self.x_offset, self.y_offset = 0, 0  # Used to move map around
         self.x_offset_step, self.y_offset_step = 45, 45  # Speed with which map actually moves
-        self.margin = 100  # when player approaches any end by margin pixels, map will respond and move accordingly
+        # when player approaches any end by margin pixels, map will respond and move accordingly
+        self.marginx, self.marginy = self.surface.get_width() / 2 - 20, self.surface.get_height() / 2 - 20
         # self.load_level()
 
     def save_json(self):

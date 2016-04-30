@@ -3,6 +3,7 @@ from pygame.locals import *
 from characters import *
 from levels import *
 from network_manager import *
+from game_objects import *
 
 logging.basicConfig(level=logging.DEBUG)
 # Latest changes:
@@ -27,8 +28,11 @@ class Game:
         self.players = {}  # Dictionary of other players, nickname is key
         self.players_sprites = 0  # all players sprites are stored here for rendering
         # Setting up window
-        self.DISPlAY_SURF = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT),0, 32)
+        self.DISPlAY_SURF = pygame.display.set_mode((self.WINDOW_WIDTH, self.WINDOW_HEIGHT), pygame.DOUBLEBUF, 32)
         self.game_state = 0  # Contains all info about game and players
+        self.crosshair = Crosshair()
+        self.game_objects = pygame.sprite.Group()
+        self.game_objects.add(self.crosshair)
         self.new_game(hosting)  # Must be last line!
 
     def do_host_networking(self):
@@ -54,7 +58,7 @@ class Game:
             self.players_sprites.add(self.player)
             self._host_main_loop()  # MUST BE LAST LINE!
         else:
-            self.player = ClientAvatar(self.DISPlAY_SURF, self.level, my_name, "Mage")
+            self.player = Mage(self.DISPlAY_SURF, self.level, my_name, "Mage")
             pygame.display.set_caption("Client {}".format(self.player.name))
             self.do_networking = self.do_client_networking
             self.world_coords = (256, 256)  # for testing
@@ -66,12 +70,9 @@ class Game:
 
     def add_new_player(self, meta_data):
         name = meta_data['name']
-        #self.players[name] = TYPES_MAP[meta_data["type"]](self.DISPlAY_SURF, self.level, name, meta_data["type"])
         if self.hosting:
-            #self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
             self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         else:
-            #self.players[name] = ClientAvatar(self.DISPlAY_SURF, self.level, name, meta_data["type"])
             self.players[name] = GuestMage(self.DISPlAY_SURF, self.level, name, meta_data["type"])
         self.players_sprites.add(self.players[meta_data['name']])
         self.players[name].world_coords = meta_data["world_coords"]
@@ -83,6 +84,10 @@ class Game:
             self._check_events()  # Check events like key presses and update global vars
             # Update level
             self.level.update()
+            # update crosshair
+            self.crosshair.update()
+            game_objects.projectiles.draw(self.DISPlAY_SURF)
+            self.game_objects.draw(self.DISPlAY_SURF)
             # Update player
             for key in self.keys_down:
                 self.player.press_key(key)
@@ -103,6 +108,10 @@ class Game:
             self._check_events()  # Check events
             # Update levelsd
             self.level.update()
+            # update crosshair
+            self.crosshair.update()
+            game_objects.projectiles.draw(self.DISPlAY_SURF)
+            self.game_objects.draw(self.DISPlAY_SURF)
             # Update player send key presses to server
             self.do_networking()
             pygame.display.set_caption("{}: {}".format(self.player.name, self.player.world_coords))
@@ -118,6 +127,14 @@ class Game:
             elif event.type == KEYUP:
                 if event.key in self.keys_down:
                     self.keys_down.remove(event.key)
+            elif event.type == pygame.MOUSEBUTTONUP:
+                self.crosshair.image.fill((255, 0, 0,))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.crosshair.image.fill((255, 255, 255,))
+                self.player.fire_projectile()
+                if not self.hosting:
+                    velocity = [-((m - r) / 10) for m, r in zip(pygame.mouse.get_pos(), self.player.rect.center)]
+                    self.network.send_message(Message(FIRE_PROJECTILE, (self.player.name, velocity,)))
             elif event.type == QUIT:
                 logging.info("Quitting game")
                 self.network.close()
