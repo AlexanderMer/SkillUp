@@ -2,11 +2,11 @@ import pygame, logging, colours, time
 
 
 class GameObject(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, world_coords):
         super().__init__()
         self.image = self.load_image()
         self.rect = self.image.get_rect()
-        self.world_coords = [0, 0]
+        self.world_coords = world_coords
 
     def load_image(self, path=0):
         #if not path:
@@ -39,7 +39,7 @@ class HealthBar():
 class Crosshair(GameObject):
     def __init__(self):
         self.image_path = "../game_sprites/crosshair.png"
-        super(Crosshair, self).__init__()
+        super(Crosshair, self).__init__(pygame.mouse.get_pos())
 
 
     def update(self):
@@ -47,8 +47,8 @@ class Crosshair(GameObject):
 
 
 class Projectile(GameObject):
-    def __init__(self, level, lifetime=5):
-        super(Projectile, self).__init__()
+    def __init__(self, level, world_coords, lifetime=5):
+        super(Projectile, self).__init__(world_coords)
         self.level = level
         self.speed = 12  # Number of pixels projectile moves per update
         self.velocity = [0, 0]
@@ -74,8 +74,8 @@ class CharProjectile(Projectile):
     def __init__(self, char, level, lifetime=5, font='freesansbold.ttf', font_size = 30):
         super(CharProjectile, self).__init__(level, lifetime)
         self.char = char
-        self.fontObj = pygame.font.Font(font, font_size)
         self.text_string = char
+        self.fontObj = pygame.font.Font(font, font_size)
         self.text_surface = self.fontObj.render(self.text_string, True, colours.GREEN, colours.BLUE)
         self.text_rect = self.text_surface.get_rect()
 

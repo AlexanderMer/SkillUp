@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Each tick Clients send key_presses to Host, which in turn must process them
 # After that host sends back the state of game to clients
 
-#TODO Make the fucking game!
+#TODO Make the game!
 
 class Game:
     def __init__(self, hosting=0):

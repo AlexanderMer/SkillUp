@@ -124,12 +124,18 @@ class GameClient:
 
     def __init__(self, game, port=9876, host=socket.gethostname()):
         self.game = game
+        host = '192.168.0.101'
         self.host = host
         self.port = port
-        self.socket = Client((host, port))
-        self.listening_thread = threading.Thread(target=self.listen)
-        self.listening_thread.start()
-        #self.connect()
+        try:
+            self.socket = Client((host, port))
+        except ConnectionRefusedError:
+            logging.error("Could not connect to host")
+            return
+        else:
+            self.listening_thread = threading.Thread(target=self.listen)
+            self.listening_thread.start()
+            #self.connect()
 
     def connect(self):
         self.send_message(Message(NEW_PLAYER, self.game.player.get_meta_data()))

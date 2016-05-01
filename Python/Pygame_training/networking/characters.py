@@ -97,14 +97,16 @@ class Avatar(pygame.sprite.Sprite):
                 proj.remove(game_objects.projectiles)
 
     def fire_projectile(self, velocity=0):
-        projectile = Projectile(self.level)
-        projectile.world_coords = self.world_coords
+        projectile = Projectile(self.level, self.world_coords)
         if velocity:
             projectile.velocity = velocity
         else:
             projectile.velocity = [-((m - r) / 10) for m, r in zip(pygame.mouse.get_pos(), self.rect.center)]
         self.projectiles.add(projectile)
         game_objects.projectiles.add(projectile)
+
+    def fire_char_projectile(self, velocity=0):
+        pass
 
     def _check_pos(self, x, y):
         """This method returns false if player is colliding with unwalkable tiles"""
